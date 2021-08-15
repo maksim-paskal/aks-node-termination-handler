@@ -28,6 +28,7 @@ run-mock:
 	go run --race ./mock
 
 test:
+	./scripts/validate-license.sh
 	go mod tidy
 	go fmt ./cmd/... ./pkg/...
 	CONFIG=testdata/config_test.yaml go test --race ./cmd/... ./pkg/...
