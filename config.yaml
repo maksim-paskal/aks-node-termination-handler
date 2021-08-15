@@ -1,0 +1,6 @@
+telegramtoken: 1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM
+# https://t.me/joinchat/iaWV0bPT_Io5NGYy
+telegramchatid: -439460552
+
+alert: |
+  Draining node {{ .Node }}, {{ .Event.Description }}

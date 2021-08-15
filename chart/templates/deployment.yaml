@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: aks-node-termination-handler
+  labels:
+    app: aks-node-termination-handler
+spec:
+  selector:
+    matchLabels:
+      app: aks-node-termination-handler
+  template:
+    metadata:
+      labels:
+        app: aks-node-termination-handler
+    spec:
+      serviceAccount: aks-node-termination-handler
+      tolerations:
+      - key: "kubernetes.azure.com/scalesetpriority"
+        operator: "Equal"
+        value: "spot"
+        effect: "NoSchedule"
+      nodeSelector:
+        kubernetes.azure.com/scalesetpriority: spot
+      containers:
+      - name: aks-node-termination-handler
+        resources:
+          requests:
+            cpu: 10m
+            memory: 100Mi
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName

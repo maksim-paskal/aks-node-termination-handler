@@ -1,0 +1,9 @@
+run:
+  timeout: 5m
+issues:
+  fix: true
+linters:
+  enable-all: true
+  disable:
+  - gochecknoglobals
+  - exhaustivestruct

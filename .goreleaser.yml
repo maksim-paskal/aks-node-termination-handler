@@ -1,0 +1,30 @@
+dockers:
+- goos: linux
+  goarch: amd64
+  image_templates:
+  - paskalmaksim/aks-node-termination-handler:latest
+  - paskalmaksim/aks-node-termination-handler:{{ .Tag }}
+  extra_files:
+  - config.yaml
+builds:
+- dir: ./cmd/
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  ldflags:
+  - -X github.com/maksim-paskal/aks-node-termination-handler.gitVersion={{.Version}}-{{.ShortCommit}}-{{.Timestamp}}
+  goos:
+  - linux
+  goarch:
+  - amd64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'

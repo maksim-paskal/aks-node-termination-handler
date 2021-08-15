@@ -1,0 +1,2 @@
+image: paskalmaksim/aks-node-termination-handler:dev
+imagePullPolicy: Always
