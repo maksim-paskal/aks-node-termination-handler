@@ -90,10 +90,10 @@ func readEndpoint(azureResource string) error { //nolint:cyclop
 					err := alerts.Send(alerts.TemplateMessageType{
 						Event:    event,
 						Node:     azureResource,
-						Template: *config.Get().Alert,
+						Template: *config.Get().AlertMessage,
 					})
 					if err != nil {
-						return errors.Wrap(err, "error in alerts.Send")
+						log.WithError(err).Error("error in alerts.Send")
 					}
 
 					err = DrainNode(ctx, *config.Get().NodeName)

@@ -29,6 +29,10 @@ spec:
             memory: 100Mi
         image: {{ .Values.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args:
+        {{- range .Values.args }}
+        - {{ . }}
+        {{- end}}
         env:
         - name: MY_NODE_NAME
           valueFrom:

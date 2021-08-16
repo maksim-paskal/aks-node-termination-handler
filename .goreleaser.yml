@@ -4,8 +4,6 @@ dockers:
   image_templates:
   - paskalmaksim/aks-node-termination-handler:latest
   - paskalmaksim/aks-node-termination-handler:{{ .Tag }}
-  extra_files:
-  - config.yaml
 builds:
 - dir: ./cmd/
   env:
