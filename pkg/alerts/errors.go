@@ -10,11 +10,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package config
+package alerts
 
 import "errors"
 
-var (
-	errNoNode          = errors.New("no node name is defined, run with -node=test")
-	errChatIDMustBeInt = errors.New("TelegramChatID must be integer")
-)
+var errHTTPNotOK = errors.New("http result not OK")

@@ -10,19 +10,28 @@ push:
 
 deploy:
 	helm uninstall aks-node-termination-handler --namespace aks-node-termination-handler || true
-	helm upgrade aks-node-termination-handler --install --create-namespace --namespace aks-node-termination-handler ./chart
+	helm upgrade aks-node-termination-handler \
+	--install \
+	--create-namespace \
+	--namespace aks-node-termination-handler \
+	./chart \
+	--set args[0]=-telegram.token=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM \
+	--set args[1]=-telegram.chatID=-439460552
 
 clean:
 	kubectl delete ns aks-node-termination-handler
 
 run:
+	# https://t.me/joinchat/iaWV0bPT_Io5NGYy
 	go run --race ./cmd \
-	-config=config.yaml \
 	-kubeconfig=kubeconfig \
 	-node=aks-spotcpu2-24406641-vmss00000e \
 	-log.level=DEBUG \
 	-log.prety \
-	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json
+	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json \
+	-webhook.url=http://localhost:28080 \
+	-telegram.token=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM \
+	-telegram.chatID=-439460552
 
 run-mock:
 	go run --race ./mock

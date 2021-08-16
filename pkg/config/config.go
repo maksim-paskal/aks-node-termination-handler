@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -24,8 +25,9 @@ import (
 )
 
 const (
-	azureEndpoint = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
-	defaultPeriod = 5 * time.Second
+	azureEndpoint       = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
+	defaultAlertMessage = "Draining node {{ .Node }}, {{ .Event.EventType }}, {{ .Event.Description }}"
+	defaultPeriod       = 5 * time.Second
 )
 
 type Type struct {
@@ -38,25 +40,34 @@ type Type struct {
 	NodeName        *string
 	Period          *time.Duration
 	TelegramToken   *string
-	TelegramChatID  *int
-	Alert           *string
+	TelegramChatID  *string
+	AlertMessage    *string
+	WebHookURL      *string
 }
 
 var config = Type{
-	ConfigFile:     flag.String("config", getEnvDefault("CONFIG", "config.yaml"), "config file"),
+	ConfigFile:     flag.String("config", os.Getenv("CONFIG"), "config file"),
 	LogLevel:       flag.String("log.level", "INFO", "log level"),
 	LogPretty:      flag.Bool("log.prety", false, "log in text"),
 	KubeConfigFile: flag.String("kubeconfig", "", "kubeconfig file"),
 	Endpoint:       flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
 	NodeName:       flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
 	Period:         flag.Duration("period", defaultPeriod, "period to scrape endpoint"),
-	TelegramToken:  flag.String("telegram.token", "", "telegram token"),
-	TelegramChatID: flag.Int("telegram.chatID", -1, "telegram chatID"),
+	TelegramToken:  flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
+	TelegramChatID: flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
+	AlertMessage:   flag.String("alert.message", defaultAlertMessage, "default message"),
+	WebHookURL:     flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
 }
 
 func Check() error {
 	if len(*config.NodeName) == 0 {
 		return errNoNode
+	}
+
+	if len(*config.TelegramChatID) > 0 {
+		if _, err := strconv.Atoi(*config.TelegramChatID); err != nil {
+			return errChatIDMustBeInt
+		}
 	}
 
 	return nil
@@ -97,19 +108,4 @@ var gitVersion = "dev"
 
 func GetVersion() string {
 	return gitVersion
-}
-
-func getEnvDefault(name string, defaultValue string) string {
-	r := os.Getenv(name)
-	defaultValueLen := len(defaultValue)
-
-	if defaultValueLen == 0 {
-		return r
-	}
-
-	if len(r) == 0 {
-		return defaultValue
-	}
-
-	return r
 }
