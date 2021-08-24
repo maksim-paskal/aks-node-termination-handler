@@ -26,7 +26,7 @@ import (
 
 const (
 	azureEndpoint       = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
-	defaultAlertMessage = "Draining node {{ .Node }}, {{ .Event.EventType }}, {{ .Event.Description }}"
+	defaultAlertMessage = "Draining node={{ .Node }}, type={{ .Event.EventType }}"
 	defaultPeriod       = 5 * time.Second
 )
 
