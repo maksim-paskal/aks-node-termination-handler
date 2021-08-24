@@ -25,7 +25,7 @@ helm upgrade aks-node-termination-handler \
 --create-namespace \
 --namespace aks-node-termination-handler \
 ./chart \
---set args[0]=webhook.url=https://hooks.slack.com/services/ID/ID/ID \
+--set args[0]=-webhook.url=https://hooks.slack.com/services/ID/ID/ID \
 --set args[1]=-telegram.token=<telegram token> \
 --set args[2]=-telegram.chatID=<telegram chatid> \
 ```
