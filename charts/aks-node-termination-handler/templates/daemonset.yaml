@@ -25,7 +25,7 @@ spec:
       - name: aks-node-termination-handler
         resources:
           requests:
-            cpu: 10m
+            cpu: 20m
             memory: 100Mi
         image: {{ .Values.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
