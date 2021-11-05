@@ -1,4 +1,4 @@
 kubeconfig
 dist
-aks-node-termination-handler
+/aks-node-termination-handler
 simulateEviction
