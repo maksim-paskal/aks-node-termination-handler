@@ -27,14 +27,11 @@ import (
 )
 
 var (
-	ctx               context.Context
 	client            = &http.Client{}
 	stopReadingEvents = false
 )
 
-func ReadEvents(appCtx context.Context, azureResource string) {
-	ctx = appCtx
-
+func ReadEvents(ctx context.Context, azureResource string) {
 	log.Infof("Watching for resource in events %s", azureResource)
 
 	for {
@@ -42,9 +39,9 @@ func ReadEvents(appCtx context.Context, azureResource string) {
 			log.Info("Stop reading events")
 			<-ctx.Done()
 		} else {
-			err := readEndpoint(azureResource)
+			err := readEndpoint(ctx, azureResource)
 			if err != nil {
-				log.Error(err)
+				log.WithError(err).Error()
 			}
 		}
 
@@ -52,7 +49,7 @@ func ReadEvents(appCtx context.Context, azureResource string) {
 	}
 }
 
-func readEndpoint(azureResource string) error { //nolint:cyclop
+func readEndpoint(ctx context.Context, azureResource string) error { //nolint:cyclop
 	log.Debugf("read %s", *config.Get().Endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", *config.Get().Endpoint, nil)

@@ -1,4 +1,5 @@
-image: paskalmaksim/aks-node-termination-handler:latest
-imagePullPolicy: Always
+image: paskalmaksim/aks-node-termination-handler:v0.0.6
+imagePullPolicy: IfNotPresent
 
 args: []
+env: []
