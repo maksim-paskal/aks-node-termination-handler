@@ -43,6 +43,7 @@ type Type struct {
 	TelegramChatID  *string
 	AlertMessage    *string
 	WebHookURL      *string
+	SentryDSN       *string
 }
 
 var config = Type{
@@ -57,6 +58,7 @@ var config = Type{
 	TelegramChatID: flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
 	AlertMessage:   flag.String("alert.message", defaultAlertMessage, "default message"),
 	WebHookURL:     flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
+	SentryDSN:      flag.String("sentry.dsn", "", "sentry DSN"),
 }
 
 func Check() error {

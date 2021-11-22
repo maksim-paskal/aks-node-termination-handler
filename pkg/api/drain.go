@@ -32,13 +32,13 @@ func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) 
 		return "", errors.Wrap(err, "error in Clientset.CoreV1().Nodes().Get")
 	}
 
-	re := regexp.MustCompile(AzureProviderID)
+	regexpObj := regexp.MustCompile(AzureProviderID)
 
-	if !re.MatchString(node.Spec.ProviderID) {
+	if !regexpObj.MatchString(node.Spec.ProviderID) {
 		return "", errors.Wrap(errAzureProviderIDNotValid, node.Spec.ProviderID)
 	}
 
-	v := re.FindAllStringSubmatch(node.Spec.ProviderID, 1)
+	v := regexpObj.FindAllStringSubmatch(node.Spec.ProviderID, 1)
 	result := fmt.Sprintf("%s_%s", v[0][3], v[0][4])
 
 	return result, nil

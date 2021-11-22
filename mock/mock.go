@@ -27,6 +27,6 @@ func main() {
 
 	err := http.ListenAndServe(port, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 }

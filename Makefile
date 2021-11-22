@@ -1,6 +1,7 @@
 KUBECONFIG=$(HOME)/.kube/azure-dev
 
 build:
+	git tag -d `git tag -l "helm-chart-*"`
 	goreleaser build --rm-dist --skip-validate --snapshot
 	mv ./dist/aks-node-termination-handler_linux_amd64/aks-node-termination-handler aks-node-termination-handler
 	docker build --pull . -t paskalmaksim/aks-node-termination-handler:dev

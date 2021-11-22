@@ -21,6 +21,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alerts"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	logrushooksentry "github.com/maksim-paskal/logrus-hook-sentry"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -29,7 +30,7 @@ var (
 	version = flag.Bool("version", false, "version")
 )
 
-func main() {
+func main() { //nolint:funlen,cyclop
 	flag.Parse()
 
 	if *version {
@@ -41,7 +42,7 @@ func main() {
 
 	logLevel, err := log.ParseLevel(*config.Get().LogLevel)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	log.SetLevel(logLevel)
@@ -54,31 +55,41 @@ func main() {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
 
+	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{
+		SentryDSN: *config.Get().SentryDSN,
+		Release:   config.GetVersion(),
+	})
+	if err != nil {
+		log.WithError(err).Error()
+	}
+
+	log.AddHook(hook)
+
 	err = config.Check()
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	err = config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	log.Debugf("using config:\n%s", config.String())
 
 	err = alerts.InitAlerts()
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	err = api.MakeAuth()
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	azureResource, err := api.GetAzureResourceName(ctx, *config.Get().NodeName)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	go api.ReadEvents(ctx, azureResource)
