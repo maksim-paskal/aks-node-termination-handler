@@ -2,6 +2,14 @@ apiVersion: v1
 entries:
   aks-node-termination-handler:
   - apiVersion: v2
+    created: "2021-11-22T07:06:51.995325331Z"
+    digest: 40c623b1ab619bde80664f56b2e3edd003f938e75f07e5eb483d55f47edd7299
+    icon: https://helm.sh/img/helm.svg
+    name: aks-node-termination-handler
+    urls:
+    - https://github.com/maksim-paskal/aks-node-termination-handler/releases/download/helm-chart-1.0.2/aks-node-termination-handler-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
     created: "2021-11-05T12:49:38.118835313Z"
     digest: a3e25a794895b40aae0374c7d2162cd4d809de06c37261b9fa6d706341d71bea
     icon: https://helm.sh/img/helm.svg
