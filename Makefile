@@ -2,7 +2,7 @@ KUBECONFIG=$(HOME)/.kube/azure-dev
 
 build:
 	git tag -d `git tag -l "helm-chart-*"`
-	goreleaser build --rm-dist --skip-validate --snapshot
+	go run github.com/goreleaser/goreleaser@latest build --rm-dist --skip-validate --snapshot
 	mv ./dist/aks-node-termination-handler_linux_amd64/aks-node-termination-handler aks-node-termination-handler
 	docker build --pull . -t paskalmaksim/aks-node-termination-handler:dev
 
@@ -26,11 +26,12 @@ run:
 	# https://t.me/joinchat/iaWV0bPT_Io5NGYy
 	go run --race ./cmd \
 	-kubeconfig=kubeconfig \
-	-node=aks-spotcpu2-24406641-vmss00000e \
+	-node=aks-spotcpu2-24406641-vmss00002v \
 	-log.level=DEBUG \
 	-log.prety \
 	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json \
-	-webhook.url=http://localhost:28080 \
+	-webhook.url=http://localhost:9091/metrics/job/aks-node-termination-handler \
+	-webhook.template='node_termination_event{node="{{ .Node }}"} 1' \
 	-telegram.token=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM \
 	-telegram.chatID=-439460552
 
@@ -42,10 +43,10 @@ test:
 	go mod tidy
 	go fmt ./cmd/... ./pkg/...
 	CONFIG=testdata/config_test.yaml go test --race ./cmd/... ./pkg/...
-	golangci-lint run -v
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run -v
 
 test-release:
-	goreleaser release --snapshot --skip-publish --rm-dist
+	go run github.com/goreleaser/goreleaser@latest release --snapshot --skip-publish --rm-dist
 
 upgrade:
 	go get -v -u k8s.io/api@v0.20.9 || true

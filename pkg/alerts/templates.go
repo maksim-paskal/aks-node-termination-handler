@@ -24,6 +24,8 @@ type TemplateMessageType struct {
 	Node     string
 	Event    types.ScheduledEventsEvent
 	Template string
+	// Used to making new line in templating results. Readonly.
+	NewLine string
 }
 
 func TemplateMessage(obj TemplateMessageType) (string, error) {
@@ -33,6 +35,8 @@ func TemplateMessage(obj TemplateMessageType) (string, error) {
 	}
 
 	var tpl bytes.Buffer
+
+	obj.NewLine = "\n"
 
 	err = tmpl.Execute(&tpl, obj)
 	if err != nil {

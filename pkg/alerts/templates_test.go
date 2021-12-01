@@ -39,3 +39,24 @@ func TestTemplateMessage(t *testing.T) {
 		t.Fatalf("want=%s,got=%s", want, tpl)
 	}
 }
+
+func TestLineBreak(t *testing.T) {
+	t.Parallel()
+
+	obj := alerts.TemplateMessageType{
+		Event: types.ScheduledEventsEvent{
+			EventId:   "someID",
+			EventType: "someType",
+		},
+		Template: `{{ .Event.EventId }}{{ .NewLine }}{{ .Event.EventType }}`,
+	}
+
+	tpl, err := alerts.TemplateMessage(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want := "someID\nsomeType"; tpl != want {
+		t.Fatalf("want=%s,got=%s", want, tpl)
+	}
+}
