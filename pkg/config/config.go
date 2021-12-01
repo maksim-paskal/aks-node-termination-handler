@@ -31,34 +31,40 @@ const (
 )
 
 type Type struct {
-	ConfigFile      *string
-	LogPretty       *bool
-	LogLevel        *string
-	DevelopmentMode *bool
-	KubeConfigFile  *string
-	Endpoint        *string
-	NodeName        *string
-	Period          *time.Duration
-	TelegramToken   *string
-	TelegramChatID  *string
-	AlertMessage    *string
-	WebHookURL      *string
-	SentryDSN       *string
+	ConfigFile         *string
+	LogPretty          *bool
+	LogLevel           *string
+	DevelopmentMode    *bool
+	KubeConfigFile     *string
+	Endpoint           *string
+	NodeName           *string
+	Period             *time.Duration
+	TelegramToken      *string
+	TelegramChatID     *string
+	AlertMessage       *string
+	WebHookInsecure    *bool
+	WebHookContentType *string
+	WebHookURL         *string
+	WebHookTemplate    *string
+	SentryDSN          *string
 }
 
 var config = Type{
-	ConfigFile:     flag.String("config", os.Getenv("CONFIG"), "config file"),
-	LogLevel:       flag.String("log.level", "INFO", "log level"),
-	LogPretty:      flag.Bool("log.prety", false, "log in text"),
-	KubeConfigFile: flag.String("kubeconfig", "", "kubeconfig file"),
-	Endpoint:       flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
-	NodeName:       flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
-	Period:         flag.Duration("period", defaultPeriod, "period to scrape endpoint"),
-	TelegramToken:  flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
-	TelegramChatID: flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
-	AlertMessage:   flag.String("alert.message", defaultAlertMessage, "default message"),
-	WebHookURL:     flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
-	SentryDSN:      flag.String("sentry.dsn", "", "sentry DSN"),
+	ConfigFile:         flag.String("config", os.Getenv("CONFIG"), "config file"),
+	LogLevel:           flag.String("log.level", "INFO", "log level"),
+	LogPretty:          flag.Bool("log.prety", false, "log in text"),
+	KubeConfigFile:     flag.String("kubeconfig", "", "kubeconfig file"),
+	Endpoint:           flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
+	NodeName:           flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
+	Period:             flag.Duration("period", defaultPeriod, "period to scrape endpoint"),
+	TelegramToken:      flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
+	TelegramChatID:     flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
+	AlertMessage:       flag.String("alert.message", defaultAlertMessage, "default message"),
+	WebHookContentType: flag.String("webhook.contentType", "application/json", "request content-type header"),
+	WebHookInsecure:    flag.Bool("webhook.insecure", false, "use insecure tls config"),
+	WebHookURL:         flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
+	WebHookTemplate:    flag.String("webhook.template", "test", "request body"),
+	SentryDSN:          flag.String("sentry.dsn", "", "sentry DSN"),
 }
 
 func Check() error {

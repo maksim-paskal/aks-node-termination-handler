@@ -15,11 +15,12 @@ package alerts
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
@@ -27,14 +28,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const httpRequestTimeout = 5 * time.Second
+
 var (
 	bot    *tgbotapi.BotAPI
-	client = &http.Client{}
+	client = &http.Client{
+		Timeout: httpRequestTimeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: *config.Get().WebHookInsecure,
+			},
+		},
+	}
 )
-
-type WebHookData struct {
-	Text string `json:"text"`
-}
 
 func InitAlerts() error {
 	if len(*config.Get().TelegramToken) == 0 {
@@ -78,9 +84,16 @@ func Send(obj TemplateMessageType) error {
 	}
 
 	if len(*config.Get().WebHookURL) != 0 {
-		result, err := sendPostJSON(*config.Get().WebHookURL, WebHookData{
-			Text: messageText,
+		webhookBody, err := TemplateMessage(TemplateMessageType{
+			Node:     obj.Node,
+			Event:    obj.Event,
+			Template: *config.Get().WebHookTemplate,
 		})
+		if err != nil {
+			return err
+		}
+
+		result, err := sendPOST(*config.Get().WebHookURL, webhookBody)
 		if err != nil {
 			return errors.Wrap(err, "error in sendPostJson")
 		}
@@ -91,20 +104,17 @@ func Send(obj TemplateMessageType) error {
 	return nil
 }
 
-func sendPostJSON(url string, data interface{}) (bodyString string, err error) {
-	jsonString, err := json.Marshal(data)
-	if err != nil {
-		return "", errors.Wrap(err, "error in json.Marshal")
-	}
+func sendPOST(url string, data string) (bodyString string, err error) {
+	log.Debug(data)
 
-	log.Debug(string(jsonString))
+	requestBody := bytes.NewBufferString(fmt.Sprintf("%s\n", data))
 
-	req, err := http.NewRequestWithContext(context.Background(), "POST", url, bytes.NewBuffer(jsonString))
+	req, err := http.NewRequestWithContext(context.Background(), "POST", url, requestBody)
 	if err != nil {
 		return "", errors.Wrap(err, "error in http.NewRequestWithContext")
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", *config.Get().WebHookContentType)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -117,7 +127,7 @@ func sendPostJSON(url string, data interface{}) (bodyString string, err error) {
 	bodyString = string(body)
 
 	if resp.StatusCode != http.StatusOK {
-		return bodyString, errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
+		return bodyString, errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d, body=%s", resp.StatusCode, bodyString))
 	}
 
 	return bodyString, nil

@@ -7,3 +7,4 @@ linters:
   disable:
   - gochecknoglobals
   - exhaustivestruct
+  - varnamelen
