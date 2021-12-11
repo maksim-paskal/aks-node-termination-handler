@@ -36,7 +36,7 @@ var (
 		Timeout: httpRequestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: *config.Get().WebHookInsecure,
+				InsecureSkipVerify: *config.Get().WebHookInsecure, //nolint:gosec
 			},
 		},
 	}
