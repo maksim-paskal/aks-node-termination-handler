@@ -49,7 +49,8 @@ test-release:
 	go run github.com/goreleaser/goreleaser@latest release --snapshot --skip-publish --rm-dist
 
 upgrade:
-	go get -v -u k8s.io/api@v0.20.9 || true
-	go get -v -u k8s.io/apimachinery@v0.20.9
-	go get -v -u k8s.io/client-go@v0.20.9
+	go get -v -u k8s.io/client-go@v0.21.10
+	go get -v -u k8s.io/kubectl@v0.21.10
+	go get -v -u k8s.io/api@v0.21.10 || true
+	go get -v -u k8s.io/apimachinery@v0.21.10
 	go mod tidy
