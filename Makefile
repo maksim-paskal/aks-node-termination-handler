@@ -1,13 +1,15 @@
 KUBECONFIG=$(HOME)/.kube/azure-dev
+tag=dev
+image=paskalmaksim/aks-node-termination-handler:$(tag)
 
 build:
 	git tag -d `git tag -l "helm-chart-*"`
 	go run github.com/goreleaser/goreleaser@latest build --rm-dist --skip-validate --snapshot
 	mv ./dist/aks-node-termination-handler_linux_amd64/aks-node-termination-handler aks-node-termination-handler
-	docker build --pull . -t paskalmaksim/aks-node-termination-handler:dev
+	docker build --pull . -t $(image)
 
 push:
-	docker push paskalmaksim/aks-node-termination-handler:dev
+	docker push $(image)
 
 deploy:
 	helm uninstall aks-node-termination-handler --namespace aks-node-termination-handler || true
@@ -54,3 +56,8 @@ upgrade:
 	go get -v -u k8s.io/api@v0.21.10 || true
 	go get -v -u k8s.io/apimachinery@v0.21.10
 	go mod tidy
+
+scan:
+	@trivy image \
+	-ignore-unfixed --no-progress --severity HIGH,CRITICAL \
+	$(image)
