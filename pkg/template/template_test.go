@@ -10,19 +10,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package alerts_test
+package template_test
 
 import (
 	"testing"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alerts"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 )
+
+const fakeTemplate = "{{"
 
 func TestTemplateMessage(t *testing.T) {
 	t.Parallel()
 
-	obj := alerts.TemplateMessageType{
+	obj := template.MessageType{
 		Event: types.ScheduledEventsEvent{
 			EventId:   "someID",
 			EventType: "someType",
@@ -30,7 +32,7 @@ func TestTemplateMessage(t *testing.T) {
 		Template: "test {{ .Event.EventId }} {{ .Event.EventType }}",
 	}
 
-	tpl, err := alerts.TemplateMessage(obj)
+	tpl, err := template.Message(obj)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +45,7 @@ func TestTemplateMessage(t *testing.T) {
 func TestLineBreak(t *testing.T) {
 	t.Parallel()
 
-	obj := alerts.TemplateMessageType{
+	obj := template.MessageType{
 		Event: types.ScheduledEventsEvent{
 			EventId:   "someID",
 			EventType: "someType",
@@ -51,12 +53,23 @@ func TestLineBreak(t *testing.T) {
 		Template: `{{ .Event.EventId }}{{ .NewLine }}{{ .Event.EventType }}`,
 	}
 
-	tpl, err := alerts.TemplateMessage(obj)
+	tpl, err := template.Message(obj)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if want := "someID\nsomeType"; tpl != want {
 		t.Fatalf("want=%s,got=%s", want, tpl)
+	}
+}
+
+func TestFakeTemplate(t *testing.T) {
+	t.Parallel()
+
+	_, err := template.Message(template.MessageType{
+		Template: fakeTemplate,
+	})
+	if err == nil {
+		t.Fatal("must be error")
 	}
 }

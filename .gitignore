@@ -2,3 +2,4 @@ kubeconfig
 dist
 /aks-node-termination-handler
 simulateEviction
+coverage.out

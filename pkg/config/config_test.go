@@ -13,12 +13,18 @@ limitations under the License.
 package config_test
 
 import (
+	"flag"
+	"strings"
 	"testing"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 )
 
-func TestConfig(t *testing.T) {
+func TestConfig(t *testing.T) { //nolint:cyclop,funlen
+	if err := flag.Set("config", "testdata/config_test.yaml"); err != nil {
+		t.Fatal(err)
+	}
+
 	t.Parallel()
 
 	if err := config.Load(); err != nil {
@@ -27,5 +33,91 @@ func TestConfig(t *testing.T) {
 
 	if want := "/some/test/path"; *config.Get().KubeConfigFile != want {
 		t.Fatalf("KubeConfigFile != %s", want)
+	}
+
+	if !strings.Contains(config.String(), "endpoint: http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01") { //nolint:lll
+		t.Fatal("config not equal to default config")
+	}
+
+	// set to fake config
+	if err := flag.Set("config", "/tmp"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := config.Load(); err == nil {
+		t.Fatal("config must errored")
+	}
+
+	// set to fake config
+	if err := flag.Set("config", "testdata/config_yaml_fake.yaml"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := config.Load(); err == nil {
+		t.Fatal("config must errored")
+	}
+
+	// set to nil config
+	if err := flag.Set("config", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := config.Load(); err != nil {
+		t.Fatal("config must be nil")
+	}
+
+	// test check node
+	if err := flag.Set("node", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := config.Load(); err != nil {
+		t.Fatal("config must be loaded")
+	}
+
+	if err := config.Check(); err == nil {
+		t.Fatal("config must be nil")
+	}
+
+	// test check chatID
+	if err := flag.Set("node", "some node"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := flag.Set("telegram.chatID", "qweqweqwe"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := config.Load(); err != nil {
+		t.Fatal("config must be loaded")
+	}
+
+	if err := config.Check(); err == nil {
+		t.Fatal("config must be nil")
+	}
+
+	// test all ok
+	if err := flag.Set("node", "some node"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := flag.Set("telegram.chatID", "12345"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := config.Load(); err != nil {
+		t.Fatal("config must be loaded")
+	}
+
+	if err := config.Check(); err != nil {
+		t.Fatal("config must be nil")
+	}
+}
+
+func TestVersion(t *testing.T) {
+	t.Parallel()
+
+	if config.GetVersion() != "dev" {
+		t.Fatal("version is not dev")
 	}
 }

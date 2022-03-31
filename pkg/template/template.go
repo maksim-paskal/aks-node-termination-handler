@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package alerts
+package template
 
 import (
 	"bytes"
@@ -20,15 +20,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type TemplateMessageType struct {
+type MessageType struct {
 	Node     string
 	Event    types.ScheduledEventsEvent
 	Template string
-	// Used to making new line in templating results. Readonly.
-	NewLine string
+	NewLine  string // Used to making new line in templating results. Readonly.
 }
 
-func TemplateMessage(obj TemplateMessageType) (string, error) {
+func Message(obj MessageType) (string, error) {
 	tmpl, err := template.New("message").Parse(obj.Template)
 	if err != nil {
 		return "", errors.Wrap(err, "error in template.Parse")

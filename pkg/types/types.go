@@ -14,7 +14,7 @@ package types
 
 // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events
 type ScheduledEventsEvent struct {
-	EventId           string //nolint:golint,revive,stylecheck
+	EventId           string //nolint:golint,revive
 	EventType         string
 	ResourceType      string
 	Resources         []string

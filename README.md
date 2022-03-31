@@ -16,9 +16,9 @@ helm repo update
 
 helm upgrade aks-node-termination-handler \
 --install \
---create-namespace \
---namespace aks-node-termination-handler \
-aks-node-termination-handler/aks-node-termination-handler
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--set priorityClassName=system-node-critical
 ```
 
 ## Alerting
@@ -28,9 +28,9 @@ To make alerts to Telegram or Slack or Webhook
 ```bash
 helm upgrade aks-node-termination-handler \
 --install \
---create-namespace \
---namespace aks-node-termination-handler \
+--namespace kube-system \
 aks-node-termination-handler/aks-node-termination-handler \
+--set priorityClassName=system-node-critical \
 --set args[0]=-webhook.url=https://hooks.slack.com/services/ID/ID/ID \
 --set args[1]=-telegram.token=<telegram token> \
 --set args[2]=-telegram.chatID=<telegram chatid> \

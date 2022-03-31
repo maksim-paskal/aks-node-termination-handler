@@ -20,11 +20,14 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubectl/pkg/drain"
 )
 
 const AzureProviderID = "^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$" //nolint:lll
+
+var errAzureProviderIDNotValid = errors.New("azureProviderID not valid")
 
 func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) {
 	node, err := Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
@@ -45,7 +48,9 @@ func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) 
 }
 
 func DrainNode(ctx context.Context, nodeName string) error {
-	node, err := Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	log.Infof("Draining node %s", nodeName)
+
+	node, err := GetNode(ctx, nodeName)
 	if err != nil {
 		return errors.Wrap(err, "error in nodes.get")
 	}
@@ -59,6 +64,7 @@ func DrainNode(ctx context.Context, nodeName string) error {
 	logger := &KubectlLogger{}
 
 	helper := &drain.Helper{
+		Ctx:                 ctx,
 		Client:              Clientset,
 		Force:               true,
 		GracePeriodSeconds:  -1,
@@ -78,4 +84,13 @@ func DrainNode(ctx context.Context, nodeName string) error {
 	}
 
 	return nil
+}
+
+func GetNode(ctx context.Context, nodeName string) (*corev1.Node, error) {
+	node, err := Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "error in nodes.get")
+	}
+
+	return node, nil
 }

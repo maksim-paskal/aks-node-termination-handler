@@ -1,5 +1,15 @@
-image: paskalmaksim/aks-node-termination-handler:v0.0.8
-imagePullPolicy: IfNotPresent
+image: paskalmaksim/aks-node-termination-handler:latest
+imagePullPolicy: Always
 
 args: []
 env: []
+
+priorityClassName: ""
+
+resources:
+  limits:
+    cpu: 20m
+    memory: 100Mi
+  requests:
+    cpu: 20m
+    memory: 100Mi

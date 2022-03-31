@@ -14,7 +14,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -28,6 +27,11 @@ const (
 	azureEndpoint       = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
 	defaultAlertMessage = "Draining node={{ .Node }}, type={{ .Event.EventType }}"
 	defaultPeriod       = 5 * time.Second
+)
+
+var (
+	errNoNode          = errors.New("no node name is defined, run with -node=test")
+	errChatIDMustBeInt = errors.New("TelegramChatID must be integer")
 )
 
 type Type struct {
@@ -47,12 +51,13 @@ type Type struct {
 	WebHookURL         *string
 	WebHookTemplate    *string
 	SentryDSN          *string
+	WebHTTPAddress     *string
 }
 
 var config = Type{
 	ConfigFile:         flag.String("config", os.Getenv("CONFIG"), "config file"),
 	LogLevel:           flag.String("log.level", "INFO", "log level"),
-	LogPretty:          flag.Bool("log.prety", false, "log in text"),
+	LogPretty:          flag.Bool("log.pretty", false, "log in text"),
 	KubeConfigFile:     flag.String("kubeconfig", "", "kubeconfig file"),
 	Endpoint:           flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
 	NodeName:           flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
@@ -65,6 +70,7 @@ var config = Type{
 	WebHookURL:         flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
 	WebHookTemplate:    flag.String("webhook.template", "test", "request body"),
 	SentryDSN:          flag.String("sentry.dsn", "", "sentry DSN"),
+	WebHTTPAddress:     flag.String("web.address", ":17923", ""),
 }
 
 func Check() error {
@@ -104,10 +110,7 @@ func Load() error {
 }
 
 func String() string {
-	out, err := yaml.Marshal(config)
-	if err != nil {
-		return fmt.Sprintf("ERROR: %t", err)
-	}
+	out, _ := yaml.Marshal(config)
 
 	return string(out)
 }

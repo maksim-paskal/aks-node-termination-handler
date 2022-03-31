@@ -19,8 +19,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alerts"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -84,7 +85,7 @@ func readEndpoint(ctx context.Context, azureResource string) error { //nolint:cy
 				if r == azureResource {
 					log.Info(string(body))
 
-					err := alerts.Send(alerts.TemplateMessageType{
+					err := alert.SendALL(template.MessageType{
 						Event:    event,
 						Node:     azureResource,
 						Template: *config.Get().AlertMessage,

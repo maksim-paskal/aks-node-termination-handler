@@ -18,19 +18,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alerts"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
+	"github.com/maksim-paskal/aks-node-termination-handler/internal"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	logrushooksentry "github.com/maksim-paskal/logrus-hook-sentry"
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	ctx     = context.Background()
-	version = flag.Bool("version", false, "version")
-)
+var version = flag.Bool("version", false, "version")
 
-func main() { //nolint:funlen,cyclop
+func main() {
 	flag.Parse()
 
 	if *version {
@@ -65,34 +61,11 @@ func main() { //nolint:funlen,cyclop
 
 	log.AddHook(hook)
 
-	err = config.Check()
-	if err != nil {
+	ctx := context.Background()
+
+	if err := internal.Run(ctx); err != nil {
 		log.WithError(err).Fatal()
 	}
-
-	err = config.Load()
-	if err != nil {
-		log.WithError(err).Fatal()
-	}
-
-	log.Debugf("using config:\n%s", config.String())
-
-	err = alerts.InitAlerts()
-	if err != nil {
-		log.WithError(err).Fatal()
-	}
-
-	err = api.MakeAuth()
-	if err != nil {
-		log.WithError(err).Fatal()
-	}
-
-	azureResource, err := api.GetAzureResourceName(ctx, *config.Get().NodeName)
-	if err != nil {
-		log.WithError(err).Fatal()
-	}
-
-	go api.ReadEvents(ctx, azureResource)
 
 	<-ctx.Done()
 }

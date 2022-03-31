@@ -44,7 +44,7 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 
 	defer r.Body.Close()
