@@ -39,6 +39,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+{{ if .Values.env }}
+{{ toYaml .Values.env | indent 8 }}
+{{ end }}
         livenessProbe:
           httpGet:
             path: /healthz
@@ -47,6 +50,3 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 5
-{{ if .Values.env }}
-{{ toYaml .Values.env | indent 8 }}
-{{ end }}
