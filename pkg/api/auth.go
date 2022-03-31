@@ -13,6 +13,8 @@ limitations under the License.
 package api
 
 import (
+	"context"
+
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -26,7 +28,7 @@ var (
 	Restconfig *rest.Config
 )
 
-func MakeAuth() error {
+func Init() error {
 	var err error
 
 	if len(*config.Get().KubeConfigFile) > 0 {
@@ -45,6 +47,15 @@ func MakeAuth() error {
 	Clientset, err = kubernetes.NewForConfig(Restconfig)
 	if err != nil {
 		log.WithError(err).Fatal()
+	}
+
+	return nil
+}
+
+func Ping() error {
+	_, err := GetNode(context.Background(), *config.Get().NodeName)
+	if err != nil {
+		return errors.Wrap(err, "error in GetNode")
 	}
 
 	return nil
