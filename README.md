@@ -31,11 +31,10 @@ helm upgrade aks-node-termination-handler \
 --namespace kube-system \
 aks-node-termination-handler/aks-node-termination-handler \
 --set priorityClassName=system-node-critical \
---set args[0]=-webhook.url=https://hooks.slack.com/services/ID/ID/ID \
---set args[1]=-telegram.token=<telegram token> \
---set args[2]=-telegram.chatID=<telegram chatid> \
---set args[3]=-webhook.url=http://prometheus-pushgateway.prometheus.svc.cluster.local:9091/metrics/job/aks-node-termination-handler \
---set args[4]=-webhook.template='node_termination_event{node="{{ .Node }}"} 1'
+--set args[0]=-telegram.token=<telegram token> \
+--set args[1]=-telegram.chatID=<telegram chatid> \
+--set args[2]=-webhook.url=http://prometheus-pushgateway.prometheus.svc.cluster.local:9091/metrics/job/aks-node-termination-handler \
+--set args[3]=-webhook.template='node_termination_event{node="{{ .Node }}"} 1'
 ```
 
 ## Simulate eviction

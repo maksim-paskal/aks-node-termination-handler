@@ -49,6 +49,7 @@ func GetHandler() *http.ServeMux {
 func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 	// check alerts transports
 	if err := alert.Ping(); err != nil {
+		log.WithError(err).Error("alerts transport is not working")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
@@ -56,6 +57,7 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 
 	// check kubernetes API
 	if err := api.Ping(); err != nil {
+		log.WithError(err).Error("kubernetes API is not available")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return

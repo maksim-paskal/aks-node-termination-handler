@@ -60,6 +60,7 @@ func main() {
 	}
 
 	log.AddHook(hook)
+	defer hook.Stop()
 
 	ctx := context.Background()
 
