@@ -46,7 +46,7 @@ func TestDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := api.DrainNode(ctx, *config.Get().NodeName); err != nil {
+	if err := api.DrainNode(ctx, *config.Get().NodeName, "Preempt", "manual"); err != nil {
 		t.Fatal(err)
 	}
 }
