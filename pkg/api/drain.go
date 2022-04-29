@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -29,12 +30,12 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 )
 
-const AzureProviderID = "^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$" //nolint:lll
-
-var (
-	errAzureProviderIDNotValid = errors.New("azureProviderID not valid")
-	taintKeyPrefix             = "aks-node-termination-handler"
+const (
+	AzureProviderID = "^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$" //nolint:lll
+	taintKeyPrefix  = "aks-node-termination-handler"
 )
+
+var errAzureProviderIDNotValid = errors.New("azureProviderID not valid")
 
 func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) {
 	node, err := Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
@@ -68,9 +69,11 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		return nil
 	}
 
-	err = addTaint(ctx, node, getTaintKey(eventType), eventID)
-	if err != nil {
-		return errors.Wrap(err, "failed to taint node")
+	if *config.Get().TaintNode {
+		err = addTaint(ctx, node, getTaintKey(eventType), eventID)
+		if err != nil {
+			return errors.Wrap(err, "failed to taint node")
+		}
 	}
 
 	logger := &KubectlLogger{}
@@ -109,7 +112,7 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 
 	updateErr := wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
 		if freshNode, err = Clientset.CoreV1().Nodes().Get(ctx, freshNode.Name, metav1.GetOptions{}); err != nil {
-			nodeErr := errors.Wrap(err, fmt.Sprintf("failed to get node %s", freshNode.Name))
+			nodeErr := errors.Wrapf(err, "failed to get node %s", freshNode.Name)
 			log.Error(nodeErr)
 
 			return false, nodeErr
@@ -121,7 +124,7 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 		case apierrorrs.IsConflict(err):
 			return false, nil
 		case err != nil:
-			return false, errors.Wrap(err, fmt.Sprintf("failed to taint node %s with key %s", freshNode.Name, taintKey))
+			return false, errors.Wrapf(err, "failed to taint node %s with key %s", freshNode.Name, taintKey)
 		}
 
 		return false, nil
@@ -140,7 +143,7 @@ func updateNodeWith(ctx context.Context, taintKey string, taintValue string, err
 	node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
 		Key:    taintKey,
 		Value:  taintValue,
-		Effect: corev1.TaintEffectNoSchedule,
+		Effect: corev1.TaintEffect(*config.Get().TaintEffect),
 	})
 	_, err = Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 
