@@ -21,6 +21,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -30,8 +31,9 @@ const (
 )
 
 var (
-	errNoNode          = errors.New("no node name is defined, run with -node=test")
-	errChatIDMustBeInt = errors.New("TelegramChatID must be integer")
+	errNoNode             = errors.New("no node name is defined, run with -node=test")
+	errChatIDMustBeInt    = errors.New("TelegramChatID must be integer")
+	errInvalidTaintEffect = errors.New("TaintEffect must be either NoSchedule, NoExecute or PreferNoSchedule")
 )
 
 type Type struct {
@@ -52,6 +54,8 @@ type Type struct {
 	WebHookTemplate    *string
 	SentryDSN          *string
 	WebHTTPAddress     *string
+	TaintNode          *bool
+	TaintEffect        *string
 }
 
 var config = Type{
@@ -71,6 +75,8 @@ var config = Type{
 	WebHookTemplate:    flag.String("webhook.template", "test", "request body"),
 	SentryDSN:          flag.String("sentry.dsn", "", "sentry DSN"),
 	WebHTTPAddress:     flag.String("web.address", ":17923", ""),
+	TaintNode:          flag.Bool("taint.node", false, "Taint the node before cordon and draining"),
+	TaintEffect:        flag.String("taint.effect", "NoSchedule", "Taint effect to set on the node"),
 }
 
 func Check() error {
@@ -84,11 +90,22 @@ func Check() error {
 		}
 	}
 
+	taintEffect := *config.TaintEffect
+	if taintEffect != string(corev1.TaintEffectNoSchedule) &&
+		taintEffect != string(corev1.TaintEffectNoExecute) &&
+		taintEffect != string(corev1.TaintEffectPreferNoSchedule) {
+		return errInvalidTaintEffect
+	}
+
 	return nil
 }
 
 func Get() *Type {
 	return &config
+}
+
+func Set(specifiedConfig Type) {
+	config = specifiedConfig
 }
 
 func Load() error {
@@ -103,7 +120,7 @@ func Load() error {
 
 	err = yaml.Unmarshal(configByte, &config)
 	if err != nil {
-		return errors.Wrap(err, "error in yaml.Unmarshal(")
+		return errors.Wrap(err, "error in yaml.Unmarshal")
 	}
 
 	return nil

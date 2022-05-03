@@ -67,7 +67,7 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerDrainNode(w http.ResponseWriter, r *http.Request) {
-	err := api.DrainNode(context.Background(), *config.Get().NodeName)
+	err := api.DrainNode(context.Background(), *config.Get().NodeName, "Preempt", "manual")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

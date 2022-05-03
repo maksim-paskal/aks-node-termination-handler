@@ -16,16 +16,24 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apierrorrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/kubectl/pkg/drain"
 )
 
-const AzureProviderID = "^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$" //nolint:lll
+const (
+	AzureProviderID = "^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$" //nolint:lll
+	taintKeyPrefix  = "aks-node-termination-handler"
+)
 
 var errAzureProviderIDNotValid = errors.New("azureProviderID not valid")
 
@@ -47,7 +55,7 @@ func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) 
 	return result, nil
 }
 
-func DrainNode(ctx context.Context, nodeName string) error {
+func DrainNode(ctx context.Context, nodeName string, eventType string, eventID string) error {
 	log.Infof("Draining node %s", nodeName)
 
 	node, err := GetNode(ctx, nodeName)
@@ -56,9 +64,16 @@ func DrainNode(ctx context.Context, nodeName string) error {
 	}
 
 	if node.Spec.Unschedulable {
-		log.Infof("Node %s is already Unschedulable", nodeName)
+		log.Infof("Node %s is already Unschedulable", node.Name)
 
 		return nil
+	}
+
+	if *config.Get().TaintNode {
+		err = addTaint(ctx, node, getTaintKey(eventType), eventID)
+		if err != nil {
+			return errors.Wrap(err, "failed to taint node")
+		}
 	}
 
 	logger := &KubectlLogger{}
@@ -79,11 +94,60 @@ func DrainNode(ctx context.Context, nodeName string) error {
 		return errors.Wrap(err, "error in drain.RunCordonOrUncordon")
 	}
 
-	if err := drain.RunNodeDrain(helper, nodeName); err != nil {
+	if err := drain.RunNodeDrain(helper, node.Name); err != nil {
 		return errors.Wrap(err, "error in drain.RunNodeDrain")
 	}
 
 	return nil
+}
+
+func getTaintKey(eventType string) string {
+	return fmt.Sprintf("%s/%s", taintKeyPrefix, strings.ToLower(eventType))
+}
+
+func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValue string) error {
+	freshNode := node.DeepCopy()
+
+	var err error
+
+	updateErr := wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
+		if freshNode, err = Clientset.CoreV1().Nodes().Get(ctx, freshNode.Name, metav1.GetOptions{}); err != nil {
+			nodeErr := errors.Wrapf(err, "failed to get node %s", freshNode.Name)
+			log.Error(nodeErr)
+
+			return false, nodeErr
+		}
+		err = updateNodeWith(ctx, taintKey, taintValue, err, freshNode)
+		switch {
+		case err == nil:
+			return true, nil
+		case apierrorrs.IsConflict(err):
+			return false, nil
+		case err != nil:
+			return false, errors.Wrapf(err, "failed to taint node %s with key %s", freshNode.Name, taintKey)
+		}
+
+		return false, nil
+	})
+
+	if updateErr != nil {
+		return err
+	}
+
+	log.Warnf("Successfully added taint %s on node %s", taintKey, freshNode.Name)
+
+	return nil
+}
+
+func updateNodeWith(ctx context.Context, taintKey string, taintValue string, err error, node *corev1.Node) error {
+	node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
+		Key:    taintKey,
+		Value:  taintValue,
+		Effect: corev1.TaintEffect(*config.Get().TaintEffect),
+	})
+	_, err = Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+
+	return errors.Wrap(err, "failed to update node with taint")
 }
 
 func GetNode(ctx context.Context, nodeName string) (*corev1.Node, error) {

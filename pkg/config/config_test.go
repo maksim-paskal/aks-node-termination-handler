@@ -13,111 +13,117 @@ limitations under the License.
 package config_test
 
 import (
-	"flag"
-	"strings"
 	"testing"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestConfig(t *testing.T) { //nolint:cyclop,funlen
-	if err := flag.Set("config", "testdata/config_test.yaml"); err != nil {
-		t.Fatal(err)
-	}
-
-	t.Parallel()
-
+//nolint:paralleltest
+func TestConfigDefaults(t *testing.T) {
 	if err := config.Load(); err != nil {
 		t.Fatal(err)
 	}
 
-	if want := "/some/test/path"; *config.Get().KubeConfigFile != want {
-		t.Fatalf("KubeConfigFile != %s", want)
-	}
+	assert.Equal(t, "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01", *config.Get().Endpoint)
+}
 
-	if !strings.Contains(config.String(), "endpoint: http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01") { //nolint:lll
-		t.Fatal("config not equal to default config")
-	}
+//nolint:paralleltest
+func TestValidConfigFile(t *testing.T) {
+	configFile := "./testdata/config_test.yaml"
+	newConfig := config.Type{ConfigFile: &configFile}
+	config.Set(newConfig)
 
-	// set to fake config
-	if err := flag.Set("config", "/tmp"); err != nil {
-		t.Fatal(err)
-	}
+	err := config.Load()
+	assert.NoError(t, err)
 
-	if err := config.Load(); err == nil {
-		t.Fatal("config must errored")
-	}
+	assert.Equal(t, "/some/test/path", *config.Get().KubeConfigFile)
+}
 
-	// set to fake config
-	if err := flag.Set("config", "testdata/config_yaml_fake.yaml"); err != nil {
-		t.Fatal(err)
-	}
+//nolint:paralleltest
+func TestInvalidConfigFile(t *testing.T) {
+	configFile := "testdata/config_yaml_fake.yaml"
+	newConfig := config.Type{ConfigFile: &configFile}
+	config.Set(newConfig)
 
-	if err := config.Load(); err == nil {
-		t.Fatal("config must errored")
-	}
+	err := config.Load()
+	assert.Error(t, err)
+}
 
-	// set to nil config
-	if err := flag.Set("config", ""); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := config.Load(); err != nil {
-		t.Fatal("config must be nil")
-	}
-
-	// test check node
-	if err := flag.Set("node", ""); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := config.Load(); err != nil {
-		t.Fatal("config must be loaded")
-	}
-
-	if err := config.Check(); err == nil {
-		t.Fatal("config must be nil")
-	}
-
-	// test check chatID
-	if err := flag.Set("node", "some node"); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := flag.Set("telegram.chatID", "qweqweqwe"); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := config.Load(); err != nil {
-		t.Fatal("config must be loaded")
-	}
-
-	if err := config.Check(); err == nil {
-		t.Fatal("config must be nil")
-	}
-
-	// test all ok
-	if err := flag.Set("node", "some node"); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := flag.Set("telegram.chatID", "12345"); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := config.Load(); err != nil {
-		t.Fatal("config must be loaded")
-	}
-
-	if err := config.Check(); err != nil {
-		t.Fatal("config must be nil")
+//nolint:paralleltest
+func TestVersion(t *testing.T) {
+	if config.GetVersion() != "dev" {
+		t.Fatal("version is not dev")
 	}
 }
 
-func TestVersion(t *testing.T) {
-	t.Parallel()
-
-	if config.GetVersion() != "dev" {
-		t.Fatal("version is not dev")
+//nolint:paralleltest,funlen
+func TestConfig(t *testing.T) {
+	testCases := []struct {
+		taintEffect string
+		nodeName    string
+		telegramID  string
+		err         bool
+		testName    string
+	}{
+		{
+			testName:    "noSchedule",
+			taintEffect: "NoSchedule",
+			telegramID:  "1",
+			nodeName:    "validNode",
+			err:         false,
+		},
+		{
+			testName:    "noExecute",
+			taintEffect: "NoExecute",
+			nodeName:    "validNode",
+			telegramID:  "1",
+			err:         false,
+		},
+		{
+			testName:    "preferNoSchedule",
+			taintEffect: "PreferNoSchedule",
+			nodeName:    "validNode",
+			telegramID:  "1",
+			err:         false,
+		},
+		{
+			testName:    "invalidNodeName",
+			taintEffect: "NoSchedule",
+			nodeName:    "",
+			telegramID:  "1",
+			err:         true,
+		},
+		{
+			testName:    "InvalidTelegramId",
+			taintEffect: "NoSchedule",
+			nodeName:    "validNode",
+			telegramID:  "invalidTelegramId",
+			err:         true,
+		},
+		{
+			testName:    "InvalidNodeName",
+			taintEffect: "NoSchedule",
+			nodeName:    "",
+			telegramID:  "1",
+			err:         true,
+		},
+	}
+	//nolint:scopelint
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			newConfig := config.Type{
+				TaintEffect:    &tc.taintEffect,
+				NodeName:       &tc.nodeName,
+				TelegramChatID: &tc.telegramID,
+			}
+			config.Set(newConfig)
+			err := config.Check()
+			if tc.err {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }
