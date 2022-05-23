@@ -36,6 +36,8 @@ run:
 	-node=$(node) \
 	-log.level=DEBUG \
 	-log.pretty \
+	-taint.node \
+	-taint.effect=NoExecute \
 	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json \
 	-webhook.url=http://localhost:9091/metrics/job/aks-node-termination-handler \
 	-webhook.template='node_termination_event{node="{{ .Node }}"} 1' \

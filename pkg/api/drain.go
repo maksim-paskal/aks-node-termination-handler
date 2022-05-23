@@ -55,7 +55,7 @@ func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) 
 	return result, nil
 }
 
-func DrainNode(ctx context.Context, nodeName string, eventType string, eventID string) error {
+func DrainNode(ctx context.Context, nodeName string, eventType string, eventID string) error { //nolint:cyclop
 	log.Infof("Draining node %s", nodeName)
 
 	node, err := GetNode(ctx, nodeName)
@@ -69,7 +69,8 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		return nil
 	}
 
-	if *config.Get().TaintNode {
+	// taint node before draining if effect is NoSchedule or TaintEffectPreferNoSchedule
+	if *config.Get().TaintNode && *config.Get().TaintEffect != string(corev1.TaintEffectNoExecute) {
 		err = addTaint(ctx, node, getTaintKey(eventType), eventID)
 		if err != nil {
 			return errors.Wrap(err, "failed to taint node")
@@ -96,6 +97,15 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 
 	if err := drain.RunNodeDrain(helper, node.Name); err != nil {
 		return errors.Wrap(err, "error in drain.RunNodeDrain")
+	}
+
+	// taint node after draining if effect is TaintEffectNoExecute
+	// this NoExecute taint effect will stop all daemonsents on the node that can not handle this effect
+	if *config.Get().TaintNode && *config.Get().TaintEffect == string(corev1.TaintEffectNoExecute) {
+		err = addTaint(ctx, node, getTaintKey(eventType), eventID)
+		if err != nil {
+			return errors.Wrap(err, "failed to taint node")
+		}
 	}
 
 	return nil
