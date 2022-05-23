@@ -17,19 +17,30 @@ spec:
       {{ if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName | quote }}
       {{ end }}
+{{- if .Values.tolerations }}
       tolerations:
-      - key: "kubernetes.azure.com/scalesetpriority"
-        operator: "Equal"
-        value: "spot"
-        effect: "NoSchedule"
+{{- toYaml .Values.tolerations | nindent 6 }}
+{{- end }}
+{{- if .Values.nodeSelector}}
       nodeSelector:
-        kubernetes.azure.com/scalesetpriority: spot
+{{- toYaml .Values.nodeSelector | nindent 8 }}
+{{- end }}
       containers:
       - name: aks-node-termination-handler
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         image: {{ .Values.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 30523
+          runAsGroup: 30523
+          privileged: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
         args:
         {{- range .Values.args }}
         - {{ . }}
