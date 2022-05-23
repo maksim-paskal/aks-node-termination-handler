@@ -8,7 +8,7 @@ telegramChatID=-439460552
 build:
 	git tag -d `git tag -l "helm-chart-*"`
 	go run github.com/goreleaser/goreleaser@latest build --rm-dist --skip-validate --snapshot
-	mv ./dist/aks-node-termination-handler_linux_amd64/aks-node-termination-handler aks-node-termination-handler
+	mv ./dist/aks-node-termination-handler_linux_amd64_v1/aks-node-termination-handler aks-node-termination-handler
 	docker build --pull . -t $(image)
 
 push:
