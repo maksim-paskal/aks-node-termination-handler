@@ -24,7 +24,9 @@ deploy:
 	--set imagePullPolicy=Always \
 	--set priorityClassName=system-node-critical \
 	--set args[0]=-telegram.token=${telegramToken} \
-	--set args[1]=-telegram.chatID=${telegramChatID}
+	--set args[1]=-telegram.chatID=${telegramChatID} \
+	--set args[2]=-taint.node \
+	--set args[3]=-taint.effect=NoExecute
 
 clean:
 	kubectl delete ns aks-node-termination-handler
@@ -84,3 +86,5 @@ scan:
 	@trivy image \
 	-ignore-unfixed --no-progress --severity HIGH,CRITICAL \
 	$(image)
+	@helm template ./charts/aks-node-termination-handler > /tmp/aks-node-termination-handler.yaml
+	@trivy config /tmp/aks-node-termination-handler.yaml

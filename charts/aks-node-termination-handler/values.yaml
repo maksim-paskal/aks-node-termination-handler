@@ -6,6 +6,15 @@ env: []
 
 priorityClassName: ""
 
+tolerations:
+- key: "kubernetes.azure.com/scalesetpriority"
+  operator: "Equal"
+  value: "spot"
+  effect: "NoSchedule"
+
+nodeSelector:
+  kubernetes.azure.com/scalesetpriority: spot
+
 resources:
   limits:
     cpu: 20m
