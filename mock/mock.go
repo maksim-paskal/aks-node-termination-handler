@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -61,7 +62,14 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	log.Infof("Listen %s", port)
 
-	err := http.ListenAndServe(port, nil)
+	scheduledEventsType, err := filepath.Abs("pkg/types/testdata/ScheduledEventsType.json")
+	if err != nil {
+		log.WithError(err).Fatal()
+	}
+
+	log.Infof("edit %s file to test events", scheduledEventsType)
+
+	err = http.ListenAndServe(port, nil)
 	if err != nil {
 		log.WithError(err).Fatal()
 	}
