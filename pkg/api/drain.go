@@ -117,7 +117,7 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 
 			return false, nodeErr
 		}
-		err = updateNodeWith(ctx, taintKey, taintValue, err, freshNode)
+		err = updateNodeWith(ctx, taintKey, taintValue, freshNode)
 		switch {
 		case err == nil:
 			return true, nil
@@ -139,13 +139,13 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 	return nil
 }
 
-func updateNodeWith(ctx context.Context, taintKey string, taintValue string, err error, node *corev1.Node) error {
+func updateNodeWith(ctx context.Context, taintKey string, taintValue string, node *corev1.Node) error {
 	node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
 		Key:    taintKey,
 		Value:  taintValue,
 		Effect: corev1.TaintEffect(*config.Get().TaintEffect),
 	})
-	_, err = Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	_, err := Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 
 	return errors.Wrap(err, "failed to update node with taint")
 }
