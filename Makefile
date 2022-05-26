@@ -26,7 +26,8 @@ deploy:
 	--set args[0]=-telegram.token=${telegramToken} \
 	--set args[1]=-telegram.chatID=${telegramChatID} \
 	--set args[2]=-taint.node \
-	--set args[3]=-taint.effect=NoExecute
+	--set args[3]=-taint.effect=NoExecute \
+	--set args[4]=-podGracePeriodSeconds=30 \
 
 clean:
 	kubectl delete ns aks-node-termination-handler
@@ -40,6 +41,7 @@ run:
 	-log.pretty \
 	-taint.node \
 	-taint.effect=NoExecute \
+	-podGracePeriodSeconds=30 \
 	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json \
 	-webhook.url=http://localhost:9091/metrics/job/aks-node-termination-handler \
 	-webhook.template='node_termination_event{node="{{ .Node }}"} 1' \
@@ -57,11 +59,15 @@ test:
 	go test --race -coverprofile coverage.out ./cmd/... ./pkg/...
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run -v
 
-test-e2e:
+.PHONY: e2e
+e2e:
 	go test -v -race ./e2e \
 	-kubeconfig=$(KUBECONFIG) \
 	-log.level=INFO \
 	-log.pretty \
+	-taint.node \
+	-taint.effect=NoExecute \
+	-podGracePeriodSeconds=30 \
 	-node=${node} \
 	-telegram.token=${telegramToken} \
 	-telegram.chatID=${telegramChatID}
