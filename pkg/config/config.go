@@ -25,9 +25,11 @@ import (
 )
 
 const (
-	azureEndpoint       = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
-	defaultAlertMessage = "Draining node={{ .Node }}, type={{ .Event.EventType }}"
-	defaultPeriod       = 5 * time.Second
+	azureEndpoint                 = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
+	defaultAlertMessage           = "Draining node={{ .Node }}, type={{ .Event.EventType }}"
+	defaultPeriod                 = 5 * time.Second
+	defaultPodGracePeriodSeconds  = -1
+	defaultNodeGracePeriodSeconds = 120
 )
 
 var (
@@ -37,46 +39,50 @@ var (
 )
 
 type Type struct {
-	ConfigFile         *string
-	LogPretty          *bool
-	LogLevel           *string
-	DevelopmentMode    *bool
-	KubeConfigFile     *string
-	Endpoint           *string
-	NodeName           *string
-	Period             *time.Duration
-	TelegramToken      *string
-	TelegramChatID     *string
-	AlertMessage       *string
-	WebHookInsecure    *bool
-	WebHookContentType *string
-	WebHookURL         *string
-	WebHookTemplate    *string
-	SentryDSN          *string
-	WebHTTPAddress     *string
-	TaintNode          *bool
-	TaintEffect        *string
+	ConfigFile             *string
+	LogPretty              *bool
+	LogLevel               *string
+	DevelopmentMode        *bool
+	KubeConfigFile         *string
+	Endpoint               *string
+	NodeName               *string
+	Period                 *time.Duration
+	TelegramToken          *string
+	TelegramChatID         *string
+	AlertMessage           *string
+	WebHookInsecure        *bool
+	WebHookContentType     *string
+	WebHookURL             *string
+	WebHookTemplate        *string
+	SentryDSN              *string
+	WebHTTPAddress         *string
+	TaintNode              *bool
+	TaintEffect            *string
+	PodGracePeriodSeconds  *int
+	NodeGracePeriodSeconds *int
 }
 
 var config = Type{
-	ConfigFile:         flag.String("config", os.Getenv("CONFIG"), "config file"),
-	LogLevel:           flag.String("log.level", "INFO", "log level"),
-	LogPretty:          flag.Bool("log.pretty", false, "log in text"),
-	KubeConfigFile:     flag.String("kubeconfig", "", "kubeconfig file"),
-	Endpoint:           flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
-	NodeName:           flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
-	Period:             flag.Duration("period", defaultPeriod, "period to scrape endpoint"),
-	TelegramToken:      flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
-	TelegramChatID:     flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
-	AlertMessage:       flag.String("alert.message", defaultAlertMessage, "default message"),
-	WebHookContentType: flag.String("webhook.contentType", "application/json", "request content-type header"),
-	WebHookInsecure:    flag.Bool("webhook.insecure", false, "use insecure tls config"),
-	WebHookURL:         flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
-	WebHookTemplate:    flag.String("webhook.template", "test", "request body"),
-	SentryDSN:          flag.String("sentry.dsn", "", "sentry DSN"),
-	WebHTTPAddress:     flag.String("web.address", ":17923", ""),
-	TaintNode:          flag.Bool("taint.node", false, "Taint the node before cordon and draining"),
-	TaintEffect:        flag.String("taint.effect", "NoSchedule", "Taint effect to set on the node"),
+	ConfigFile:             flag.String("config", os.Getenv("CONFIG"), "config file"),
+	LogLevel:               flag.String("log.level", "INFO", "log level"),
+	LogPretty:              flag.Bool("log.pretty", false, "log in text"),
+	KubeConfigFile:         flag.String("kubeconfig", "", "kubeconfig file"),
+	Endpoint:               flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
+	NodeName:               flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
+	Period:                 flag.Duration("period", defaultPeriod, "period to scrape endpoint"),
+	TelegramToken:          flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
+	TelegramChatID:         flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
+	AlertMessage:           flag.String("alert.message", defaultAlertMessage, "default message"),
+	WebHookContentType:     flag.String("webhook.contentType", "application/json", "request content-type header"),
+	WebHookInsecure:        flag.Bool("webhook.insecure", false, "use insecure tls config"),
+	WebHookURL:             flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
+	WebHookTemplate:        flag.String("webhook.template", "test", "request body"),
+	SentryDSN:              flag.String("sentry.dsn", "", "sentry DSN"),
+	WebHTTPAddress:         flag.String("web.address", ":17923", ""),
+	TaintNode:              flag.Bool("taint.node", false, "Taint the node before cordon and draining"),
+	TaintEffect:            flag.String("taint.effect", "NoSchedule", "Taint effect to set on the node"),
+	PodGracePeriodSeconds:  flag.Int("podGracePeriodSeconds", defaultPodGracePeriodSeconds, "grace period is seconds for pods termination"), //nolint:lll
+	NodeGracePeriodSeconds: flag.Int("nodeGracePeriodSeconds", defaultNodeGracePeriodSeconds, "maximum time in seconds to drain the node"),  //nolint:lll
 }
 
 func Check() error {

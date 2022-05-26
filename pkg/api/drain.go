@@ -83,12 +83,12 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		Ctx:                 ctx,
 		Client:              Clientset,
 		Force:               true,
-		GracePeriodSeconds:  -1,
+		GracePeriodSeconds:  *config.Get().PodGracePeriodSeconds,
 		IgnoreAllDaemonSets: true,
 		Out:                 logger,
 		ErrOut:              logger,
 		DeleteEmptyDirData:  true,
-		Timeout:             time.Duration(120) * time.Second, //nolint:gomnd
+		Timeout:             time.Duration(*config.Get().NodeGracePeriodSeconds) * time.Second,
 	}
 
 	if err := drain.RunCordonOrUncordon(helper, node, true); err != nil {
