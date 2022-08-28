@@ -13,9 +13,9 @@ limitations under the License.
 package web
 
 import (
-	"context"
 	"net/http"
 	"net/http/pprof"
+	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
@@ -26,7 +26,19 @@ import (
 func Start() {
 	log.Info("http.address=", *config.Get().WebHTTPAddress)
 
-	if err := http.ListenAndServe(*config.Get().WebHTTPAddress, GetHandler()); err != nil {
+	const (
+		readTimeout    = 5 * time.Second
+		requestTimeout = 10 * time.Second
+		writeTimeout   = 20 * time.Second
+	)
+
+	server := &http.Server{
+		Addr:         *config.Get().WebHTTPAddress,
+		Handler:      http.TimeoutHandler(GetHandler(), requestTimeout, "timeout"),
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		log.WithError(err).Fatal()
 	}
 }
@@ -56,7 +68,7 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check kubernetes API
-	if err := api.Ping(); err != nil {
+	if err := api.Ping(r.Context()); err != nil {
 		log.WithError(err).Error("kubernetes API is not available")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -67,7 +79,7 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerDrainNode(w http.ResponseWriter, r *http.Request) {
-	err := api.DrainNode(context.Background(), *config.Get().NodeName, "Preempt", "manual")
+	err := api.DrainNode(r.Context(), *config.Get().NodeName, "Preempt", "manual")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
