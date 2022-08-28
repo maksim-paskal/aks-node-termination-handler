@@ -52,8 +52,8 @@ func Init() error {
 	return nil
 }
 
-func Ping() error {
-	_, err := GetNode(context.Background(), *config.Get().NodeName)
+func Ping(ctx context.Context) error {
+	_, err := GetNode(ctx, *config.Get().NodeName)
 	if err != nil {
 		return errors.Wrap(err, "error in GetNode")
 	}

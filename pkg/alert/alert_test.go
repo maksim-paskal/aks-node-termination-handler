@@ -14,6 +14,7 @@ limitations under the License.
 package alert_test
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -31,7 +32,7 @@ import (
 var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	if err := testWebhookRequest(r); err != nil {
 		log.WithError(err).Error()
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		_, _ = w.Write([]byte("OK"))
 	}
@@ -63,7 +64,7 @@ func TestWebHook(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := alert.SendWebHook(template.MessageType{
+	if err := alert.SendWebHook(context.Background(), template.MessageType{
 		Node: "test",
 	}); err != nil {
 		t.Fatal(err)

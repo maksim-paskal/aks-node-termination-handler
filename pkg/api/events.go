@@ -53,7 +53,7 @@ func ReadEvents(ctx context.Context, azureResource string) {
 func readEndpoint(ctx context.Context, azureResource string) error { //nolint:cyclop
 	log.Debugf("read %s", *config.Get().Endpoint)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", *config.Get().Endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)
 	if err != nil {
 		return errors.Wrap(err, "error in http.NewRequestWithContext")
 	}
@@ -85,7 +85,7 @@ func readEndpoint(ctx context.Context, azureResource string) error { //nolint:cy
 				if r == azureResource {
 					log.Info(string(body))
 
-					err := alert.SendALL(template.MessageType{
+					err := alert.SendALL(ctx, template.MessageType{
 						Event:    event,
 						Node:     azureResource,
 						Template: *config.Get().AlertMessage,

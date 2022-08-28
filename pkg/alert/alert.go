@@ -74,12 +74,12 @@ func Ping() error {
 	return nil
 }
 
-func SendALL(obj template.MessageType) error {
+func SendALL(ctx context.Context, obj template.MessageType) error {
 	if err := SendTelegram(obj); err != nil {
 		return errors.Wrap(err, "error in sending to telegram")
 	}
 
-	if err := SendWebHook(obj); err != nil {
+	if err := SendWebHook(ctx, obj); err != nil {
 		return errors.Wrap(err, "error in sending to webhook")
 	}
 
@@ -113,7 +113,7 @@ func SendTelegram(obj template.MessageType) error {
 	return nil
 }
 
-func SendWebHook(obj template.MessageType) error {
+func SendWebHook(ctx context.Context, obj template.MessageType) error {
 	if len(*config.Get().WebHookURL) == 0 {
 		return nil
 	}
@@ -129,7 +129,7 @@ func SendWebHook(obj template.MessageType) error {
 
 	requestBody := bytes.NewBufferString(fmt.Sprintf("%s\n", webhookBody))
 
-	req, err := http.NewRequestWithContext(context.Background(), "POST", *config.Get().WebHookURL, requestBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, *config.Get().WebHookURL, requestBody)
 	if err != nil {
 		return errors.Wrap(err, "error in http.NewRequestWithContext")
 	}

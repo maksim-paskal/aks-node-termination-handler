@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -69,7 +70,18 @@ func main() {
 
 	log.Infof("edit %s file to test events", scheduledEventsType)
 
-	err = http.ListenAndServe(port, nil)
+	const (
+		readTimeout  = 5 * time.Second
+		writeTimeout = 10 * time.Second
+	)
+
+	server := &http.Server{
+		Addr:         port,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+	}
+
+	err = server.ListenAndServe()
 	if err != nil {
 		log.WithError(err).Fatal()
 	}
