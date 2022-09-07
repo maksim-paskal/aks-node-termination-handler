@@ -14,7 +14,7 @@ package types_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
@@ -23,7 +23,7 @@ import (
 func TestScheduledEventsType(t *testing.T) {
 	t.Parallel()
 
-	messageBytes, err := ioutil.ReadFile("testdata/ScheduledEventsType.json")
+	messageBytes, err := os.ReadFile("testdata/ScheduledEventsType.json")
 	if err != nil {
 		t.Fatal(err)
 	}

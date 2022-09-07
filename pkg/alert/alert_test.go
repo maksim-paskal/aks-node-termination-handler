@@ -18,7 +18,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,7 +45,7 @@ func testWebhookRequest(r *http.Request) error {
 
 	defer r.Body.Close()
 
-	body, _ := ioutil.ReadAll(r.Body)
+	body, _ := io.ReadAll(r.Body)
 
 	if bodyString := string(body); bodyString != "node_termination_event{node=\"test\"} 1\n" {
 		return fmt.Errorf("Response body [%s] is not correct", bodyString)

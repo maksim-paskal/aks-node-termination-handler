@@ -14,7 +14,6 @@ package config
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -119,9 +118,9 @@ func Load() error {
 		return nil
 	}
 
-	configByte, err := ioutil.ReadFile(*config.ConfigFile)
+	configByte, err := os.ReadFile(*config.ConfigFile)
 	if err != nil {
-		return errors.Wrap(err, "error in ioutil.ReadFile")
+		return errors.Wrap(err, "error in os.ReadFile")
 	}
 
 	err = yaml.Unmarshal(configByte, &config)
