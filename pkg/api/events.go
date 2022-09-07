@@ -15,7 +15,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -67,9 +67,9 @@ func readEndpoint(ctx context.Context, azureResource string) error { //nolint:cy
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "error in ioutil.ReadAll")
+		return errors.Wrap(err, "error in io.ReadAll")
 	}
 
 	message := types.ScheduledEventsType{}
