@@ -34,7 +34,7 @@ func Run(ctx context.Context) error {
 		return errors.Wrap(err, "error in config load")
 	}
 
-	log.Debugf("using config:\n%s", config.String())
+	log.Debugf("using config: %s", config.Get().String())
 
 	err = alert.Init()
 	if err != nil {
