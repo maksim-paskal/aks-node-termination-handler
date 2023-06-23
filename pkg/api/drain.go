@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
@@ -88,7 +87,7 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		Out:                 logger,
 		ErrOut:              logger,
 		DeleteEmptyDirData:  true,
-		Timeout:             time.Duration(*config.Get().NodeGracePeriodSeconds) * time.Second,
+		Timeout:             config.Get().NodeGracePeriod(),
 	}
 
 	if err := drain.RunCordonOrUncordon(helper, node, true); err != nil {

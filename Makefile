@@ -1,4 +1,4 @@
-KUBECONFIG=$(HOME)/.kube/azure-dev
+KUBECONFIG=$(HOME)/.kube/azure-stage
 tag=dev
 image=paskalmaksim/aks-node-termination-handler:$(tag)
 node=aks-spotcpu2d2-19365445-vmss000006
@@ -46,7 +46,8 @@ run:
 	-webhook.url=http://localhost:9091/metrics/job/aks-node-termination-handler \
 	-webhook.template='node_termination_event{node="{{ .Node }}"} 1' \
 	-telegram.token=${telegramToken} \
-	-telegram.chatID=${telegramChatID}
+	-telegram.chatID=${telegramChatID} \
+	-web.address=127.0.0.1:17923
 
 run-mock:
 	go run --race ./mock
