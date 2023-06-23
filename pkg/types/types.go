@@ -12,10 +12,28 @@ limitations under the License.
 */
 package types
 
+type ScheduledEventsEventType string
+
+const (
+	// The Virtual Machine is scheduled to pause for a few seconds. CPU and network connectivity
+	// may be suspended, but there's no impact on memory or open files.
+	EventTypeFreeze = "Freeze"
+	// The Virtual Machine is scheduled for reboot (non-persistent memory is lost).
+	// This event is made available on a best effort basis.
+	EventTypeReboot = "Reboot"
+	// The Virtual Machine is scheduled to move to another node (ephemeral disks are lost).
+	// This event is delivered on a best effort basis.
+	EventTypeRedeploy = "Redeploy"
+	// The Spot Virtual Machine is being deleted (ephemeral disks are lost).
+	EventTypePreempt = "Preempt"
+	// The virtual machine is scheduled to be deleted.
+	EventTypeTerminate = "Terminate"
+)
+
 // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events
 type ScheduledEventsEvent struct {
 	EventId           string //nolint:golint,revive,stylecheck
-	EventType         string
+	EventType         ScheduledEventsEventType
 	ResourceType      string
 	Resources         []string
 	EventStatus       string
