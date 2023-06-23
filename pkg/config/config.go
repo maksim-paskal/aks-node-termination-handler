@@ -13,6 +13,7 @@ limitations under the License.
 package config
 
 import (
+	"encoding/json"
 	"flag"
 	"os"
 	"strconv"
@@ -95,6 +96,15 @@ func (t *Type) NodeGracePeriod() time.Duration {
 	return time.Duration(*t.NodeGracePeriodSeconds) * time.Second
 }
 
+func (t *Type) String() string {
+	b, err := json.Marshal(t)
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(b)
+}
+
 func Check() error {
 	if len(*config.NodeName) == 0 {
 		return errNoNode
@@ -140,12 +150,6 @@ func Load() error {
 	}
 
 	return nil
-}
-
-func String() string {
-	out, _ := yaml.Marshal(config)
-
-	return string(out)
 }
 
 var gitVersion = "dev"

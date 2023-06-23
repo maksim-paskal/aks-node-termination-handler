@@ -13,6 +13,7 @@ limitations under the License.
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,8 +23,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-
-const port = ":28080"
 
 func debugHandler(w http.ResponseWriter, r *http.Request) {
 	// Create return string
@@ -59,9 +58,11 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 
 // simple server for test env.
 func main() {
+	address := flag.String("address", ":28080", "address")
+	flag.Parse()
+
 	http.HandleFunc("/debug", debugHandler)
 	http.Handle("/", http.FileServer(http.Dir(".")))
-	log.Infof("Listen %s", port)
 
 	scheduledEventsType, err := filepath.Abs("pkg/types/testdata/ScheduledEventsType.json")
 	if err != nil {
@@ -76,10 +77,12 @@ func main() {
 	)
 
 	server := &http.Server{
-		Addr:         port,
+		Addr:         *address,
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 	}
+
+	log.Infof("Listen %s", server.Addr)
 
 	err = server.ListenAndServe()
 	if err != nil {

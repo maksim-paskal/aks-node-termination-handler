@@ -1,7 +1,6 @@
 KUBECONFIG=$(HOME)/.kube/azure-stage
 tag=dev
 image=paskalmaksim/aks-node-termination-handler:$(tag)
-node=aks-spotcpu2d2-19365445-vmss000006
 telegramToken=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM
 telegramChatID=-439460552
 
@@ -36,7 +35,7 @@ run:
 	# https://t.me/joinchat/iaWV0bPT_Io5NGYy
 	go run --race ./cmd \
 	-kubeconfig=${KUBECONFIG} \
-	-node=$(node) \
+	-node=`kubectl get no -lkubernetes.azure.com/scalesetpriority=spot | awk '{print $$1}' | tail -1` \
 	-log.level=DEBUG \
 	-log.pretty \
 	-taint.node \
@@ -50,7 +49,7 @@ run:
 	-web.address=127.0.0.1:17923
 
 run-mock:
-	go run --race ./mock
+	go run --race ./mock -address=127.0.0.1:28080
 
 test:
 	./scripts/validate-license.sh

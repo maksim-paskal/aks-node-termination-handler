@@ -17,93 +17,96 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	client            = &http.Client{}
-	stopReadingEvents = false
-)
+var client = &http.Client{}
 
 func ReadEvents(ctx context.Context, azureResource string) {
 	log.Infof("Watching for resource in events %s", azureResource)
 
 	for {
-		if stopReadingEvents {
-			log.Info("Stop reading events")
-			<-ctx.Done()
-		} else {
-			err := readEndpoint(ctx, azureResource)
-			if err != nil {
-				log.WithError(err).Error()
-			}
+		if ctx.Err() != nil {
+			log.Info("Context canceled")
+
+			return
 		}
 
-		time.Sleep(*config.Get().Period)
+		stopReadingEvents, err := readEndpoint(ctx, azureResource)
+		if err != nil {
+			log.WithError(err).Error()
+		}
+
+		if stopReadingEvents {
+			log.Info("Stop reading events")
+
+			return
+		}
+
+		log.Debugf("Sleep %s", *config.Get().Period)
+		utils.SleepWithContext(ctx, *config.Get().Period)
 	}
 }
 
-func readEndpoint(ctx context.Context, azureResource string) error { //nolint:cyclop
+func readEndpoint(ctx context.Context, azureResource string) (bool, error) {
 	log.Debugf("read %s", *config.Get().Endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)
 	if err != nil {
-		return errors.Wrap(err, "error in http.NewRequestWithContext")
+		return false, errors.Wrap(err, "error in http.NewRequestWithContext")
 	}
 
 	req.Header.Add("Metadata", "true")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "error in client.Do(req)")
+		return false, errors.Wrap(err, "error in client.Do(req)")
 	}
 
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "error in io.ReadAll")
+		return false, errors.Wrap(err, "error in io.ReadAll")
 	}
 
 	message := types.ScheduledEventsType{}
 
 	err = json.Unmarshal(body, &message)
 	if err != nil {
-		return errors.Wrap(err, "error in json.Unmarshal")
+		return false, errors.Wrap(err, "error in json.Unmarshal")
 	}
 
-	if len(message.Events) > 0 { //nolint:nestif
-		for _, event := range message.Events {
-			for _, r := range event.Resources {
-				if r == azureResource {
-					log.Info(string(body))
+	for _, event := range message.Events {
+		for _, r := range event.Resources {
+			if r == azureResource {
+				log.Info(string(body))
 
-					err := alert.SendALL(ctx, template.MessageType{
-						Event:    event,
-						Node:     azureResource,
-						Template: *config.Get().AlertMessage,
-					})
-					if err != nil {
-						log.WithError(err).Error("error in alerts.Send")
-					}
-
-					err = DrainNode(ctx, *config.Get().NodeName, event.EventType, event.EventId)
-					if err != nil {
-						return errors.Wrap(err, "error in DrainNode")
-					}
-
-					stopReadingEvents = true
+				err := alert.SendALL(ctx, template.MessageType{
+					Event:    event,
+					Node:     azureResource,
+					Template: *config.Get().AlertMessage,
+				})
+				if err != nil {
+					log.WithError(err).Error("error in alerts.Send")
 				}
+
+				err = DrainNode(ctx, *config.Get().NodeName, event.EventType, event.EventId)
+				if err != nil {
+					return false, errors.Wrap(err, "error in DrainNode")
+				}
+
+				return true, nil
 			}
 		}
 	}
 
-	return nil
+	return false, nil
 }

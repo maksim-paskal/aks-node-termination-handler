@@ -25,8 +25,6 @@ import (
 )
 
 func Start(ctx context.Context) {
-	log.Info("http.address=", *config.Get().WebHTTPAddress)
-
 	const (
 		readTimeout    = 5 * time.Second
 		requestTimeout = 10 * time.Second
@@ -39,6 +37,8 @@ func Start(ctx context.Context) {
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 	}
+
+	log.Info("web.address=", server.Addr)
 
 	go func() {
 		<-ctx.Done()
