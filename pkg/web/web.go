@@ -13,6 +13,7 @@ limitations under the License.
 package web
 
 import (
+	"context"
 	"net/http"
 	"net/http/pprof"
 	"time"
@@ -23,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Start() {
+func Start(ctx context.Context) {
 	log.Info("http.address=", *config.Get().WebHTTPAddress)
 
 	const (
@@ -38,6 +39,16 @@ func Start() {
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 	}
+
+	go func() {
+		<-ctx.Done()
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), config.Get().GracePeriod())
+		defer shutdownCancel()
+
+		_ = server.Shutdown(shutdownCtx) //nolint:contextcheck
+	}()
+
 	if err := server.ListenAndServe(); err != nil {
 		log.WithError(err).Fatal()
 	}

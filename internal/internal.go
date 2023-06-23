@@ -52,7 +52,7 @@ func Run(ctx context.Context) error {
 	}
 
 	go api.ReadEvents(ctx, azureResource)
-	go web.Start()
+	go web.Start(ctx)
 
 	return nil
 }

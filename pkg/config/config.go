@@ -29,6 +29,7 @@ const (
 	defaultPeriod                 = 5 * time.Second
 	defaultPodGracePeriodSeconds  = -1
 	defaultNodeGracePeriodSeconds = 120
+	defaultGracePeriodSecond      = 10
 )
 
 var (
@@ -59,6 +60,7 @@ type Type struct {
 	TaintEffect            *string
 	PodGracePeriodSeconds  *int
 	NodeGracePeriodSeconds *int
+	GracePeriodSeconds     *int
 }
 
 var config = Type{
@@ -82,6 +84,15 @@ var config = Type{
 	TaintEffect:            flag.String("taint.effect", "NoSchedule", "Taint effect to set on the node"),
 	PodGracePeriodSeconds:  flag.Int("podGracePeriodSeconds", defaultPodGracePeriodSeconds, "grace period is seconds for pods termination"), //nolint:lll
 	NodeGracePeriodSeconds: flag.Int("nodeGracePeriodSeconds", defaultNodeGracePeriodSeconds, "maximum time in seconds to drain the node"),  //nolint:lll
+	GracePeriodSeconds:     flag.Int("gracePeriodSeconds", defaultGracePeriodSecond, "grace period is seconds for application termination"), //nolint:lll
+}
+
+func (t *Type) GracePeriod() time.Duration {
+	return time.Duration(*t.GracePeriodSeconds) * time.Second
+}
+
+func (t *Type) NodeGracePeriod() time.Duration {
+	return time.Duration(*t.NodeGracePeriodSeconds) * time.Second
 }
 
 func Check() error {

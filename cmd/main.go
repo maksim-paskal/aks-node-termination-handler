@@ -17,6 +17,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/internal"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
@@ -26,7 +29,7 @@ import (
 
 var version = flag.Bool("version", false, "version")
 
-func main() {
+func main() { //nolint:funlen
 	flag.Parse()
 
 	if *version {
@@ -62,11 +65,34 @@ func main() {
 	log.AddHook(hook)
 	defer hook.Stop()
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	signalChanInterrupt := make(chan os.Signal, 1)
+	signal.Notify(signalChanInterrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		log.RegisterExitHandler(func() {
+			cancel()
+			// wait before shutdown
+			time.Sleep(config.Get().GracePeriod())
+		})
+
+		select {
+		case <-signalChanInterrupt:
+			log.Error("Got interruption signal...")
+			cancel()
+		case <-ctx.Done():
+		}
+		<-signalChanInterrupt
+		os.Exit(1)
+	}()
 
 	if err := internal.Run(ctx); err != nil {
 		log.WithError(err).Fatal()
 	}
 
 	<-ctx.Done()
+
+	log.Info("Shutdown")
 }
