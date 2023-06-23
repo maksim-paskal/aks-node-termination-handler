@@ -98,7 +98,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) {
 					log.WithError(err).Error("error in alerts.Send")
 				}
 
-				err = DrainNode(ctx, *config.Get().NodeName, event.EventType, event.EventId)
+				err = DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId)
 				if err != nil {
 					return false, errors.Wrap(err, "error in DrainNode")
 				}
