@@ -4,6 +4,10 @@ image=paskalmaksim/aks-node-termination-handler:$(tag)
 telegramToken=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM
 telegramChatID=-439460552
 
+chart-lint:
+	ct lint --all
+	helm template ./charts/aks-node-termination-handler | kubectl apply --dry-run=client -f -
+
 build:
 	git tag -d `git tag -l "helm-chart-*"`
 	go run github.com/goreleaser/goreleaser@latest build --rm-dist --skip-validate --snapshot

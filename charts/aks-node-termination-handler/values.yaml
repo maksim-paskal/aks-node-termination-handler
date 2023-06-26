@@ -5,6 +5,11 @@ args: []
 env: []
 
 priorityClassName: ""
+annotations: {}
+labels: {}
+
+metrics:
+  addAnnotations: true
 
 tolerations:
 - key: "kubernetes.azure.com/scalesetpriority"
