@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
@@ -62,6 +63,7 @@ type Type struct {
 	PodGracePeriodSeconds  *int
 	NodeGracePeriodSeconds *int
 	GracePeriodSeconds     *int
+	DrainOnFreezeEvent     *bool
 }
 
 var config = Type{
@@ -86,6 +88,7 @@ var config = Type{
 	PodGracePeriodSeconds:  flag.Int("podGracePeriodSeconds", defaultPodGracePeriodSeconds, "grace period is seconds for pods termination"), //nolint:lll
 	NodeGracePeriodSeconds: flag.Int("nodeGracePeriodSeconds", defaultNodeGracePeriodSeconds, "maximum time in seconds to drain the node"),  //nolint:lll
 	GracePeriodSeconds:     flag.Int("gracePeriodSeconds", defaultGracePeriodSecond, "grace period is seconds for application termination"), //nolint:lll
+	DrainOnFreezeEvent:     flag.Bool("drainOnFreezeEvent", false, "drain node on freeze event"),
 }
 
 func (t *Type) GracePeriod() time.Duration {
@@ -94,6 +97,15 @@ func (t *Type) GracePeriod() time.Duration {
 
 func (t *Type) NodeGracePeriod() time.Duration {
 	return time.Duration(*t.NodeGracePeriodSeconds) * time.Second
+}
+
+// check is event is excluded from draining node.
+func (t *Type) IsExcludedEvent(e types.ScheduledEventsEventType) bool {
+	if e == types.EventTypeFreeze && !*t.DrainOnFreezeEvent {
+		return true
+	}
+
+	return false
 }
 
 func (t *Type) String() string {

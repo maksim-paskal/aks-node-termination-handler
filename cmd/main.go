@@ -71,13 +71,13 @@ func main() { //nolint:funlen
 	signalChanInterrupt := make(chan os.Signal, 1)
 	signal.Notify(signalChanInterrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		log.RegisterExitHandler(func() {
-			cancel()
-			// wait before shutdown
-			time.Sleep(config.Get().GracePeriod())
-		})
+	log.RegisterExitHandler(func() {
+		cancel()
+		// wait before shutdown
+		time.Sleep(config.Get().GracePeriod())
+	})
 
+	go func() {
 		select {
 		case <-signalChanInterrupt:
 			log.Error("Got interruption signal...")

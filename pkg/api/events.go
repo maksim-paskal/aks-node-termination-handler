@@ -32,6 +32,15 @@ var client = &http.Client{}
 func ReadEvents(ctx context.Context, azureResource string) {
 	log.Infof("Watching for resource in events %s", azureResource)
 
+	nodeEvent := eventMessage{
+		Type:    "Info",
+		Reason:  "ReadEvents",
+		Message: "Start to listen events from Azure API",
+	}
+	if err := addNodeEvent(ctx, &nodeEvent); err != nil {
+		log.WithError(err).Error()
+	}
+
 	for {
 		if ctx.Err() != nil {
 			log.Info("Context canceled")
@@ -55,7 +64,7 @@ func ReadEvents(ctx context.Context, azureResource string) {
 	}
 }
 
-func readEndpoint(ctx context.Context, azureResource string) (bool, error) {
+func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //nolint:cyclop,funlen
 	log.Debugf("read %s", *config.Get().Endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)
@@ -87,6 +96,21 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) {
 	for _, event := range message.Events {
 		for _, r := range event.Resources {
 			if r == azureResource {
+				nodeEvent := eventMessage{
+					Type:    "Warning",
+					Reason:  string(event.EventType),
+					Message: "Azure API sended schedule event for this node",
+				}
+				if err := addNodeEvent(ctx, &nodeEvent); err != nil {
+					log.WithError(err).Error()
+				}
+
+				if config.Get().IsExcludedEvent(event.EventType) {
+					log.Infof("Excluded event %s by user config", event.EventType)
+
+					continue
+				}
+
 				log.Info(string(body))
 
 				err := alert.SendALL(ctx, template.MessageType{
