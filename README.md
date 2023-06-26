@@ -44,3 +44,13 @@ You can test with [Simulate Eviction API](https://docs.microsoft.com/en-us/rest/
 ```bash
 POST https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/virtualMachines/{instanceId}/simulateEviction?api-version=2021-11-01
 ```
+
+## Metrics
+
+Application expose Prometheus metrics in `/metrics` endpoint. Installing latest chart will add annotations to pods:
+
+```yaml
+annotations:
+  prometheus.io/port: "17923"
+  prometheus.io/scrape: "true"
+```

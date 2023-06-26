@@ -20,6 +20,7 @@ import (
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/utils"
@@ -27,7 +28,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var client = &http.Client{}
+var client = &http.Client{
+	Transport: metrics.NewInstrumenter("events").InstrumentedRoundTripper(),
+}
 
 func ReadEvents(ctx context.Context, azureResource string) {
 	log.Infof("Watching for resource in events %s", azureResource)
@@ -50,6 +53,8 @@ func ReadEvents(ctx context.Context, azureResource string) {
 
 		stopReadingEvents, err := readEndpoint(ctx, azureResource)
 		if err != nil {
+			metrics.ErrorReadingEndpoint.Inc()
+
 			log.WithError(err).Error()
 		}
 
@@ -96,6 +101,10 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 	for _, event := range message.Events {
 		for _, r := range event.Resources {
 			if r == azureResource {
+				log.Info(string(body))
+
+				metrics.ScheduledEventsTotal.WithLabelValues(string(event.EventType)).Inc()
+
 				nodeEvent := eventMessage{
 					Type:    "Warning",
 					Reason:  string(event.EventType),
@@ -110,8 +119,6 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 					continue
 				}
-
-				log.Info(string(body))
 
 				err := alert.SendALL(ctx, template.MessageType{
 					Event:    event,

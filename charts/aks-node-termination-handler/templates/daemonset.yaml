@@ -10,8 +10,19 @@ spec:
       app: aks-node-termination-handler
   template:
     metadata:
+      annotations:
+{{ if .Values.metrics.addAnnotations }}
+        prometheus.io/port: "17923"
+        prometheus.io/scrape: "true"
+{{ end }}
+{{ if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 8 }}
+{{ end }}
       labels:
         app: aks-node-termination-handler
+{{ if .Values.labels }}
+{{ toYaml .Values.labels | indent 8 }}
+{{ end }}
     spec:
       serviceAccount: aks-node-termination-handler
       {{ if .Values.priorityClassName }}

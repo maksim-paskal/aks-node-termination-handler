@@ -21,6 +21,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -59,6 +60,8 @@ func GetHandler() *http.ServeMux {
 
 	mux.HandleFunc("/healthz", handlerHealthz)
 	mux.HandleFunc("/drainNode", handlerDrainNode)
+
+	mux.Handle("/metrics", metrics.GetHandler())
 
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
