@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,5 +126,27 @@ func TestConfig(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+func TestIsExcludedEvent(t *testing.T) {
+	t.Parallel()
+
+	trueValue := true
+	falseValue := false
+
+	testConfigValid := config.Type{
+		DrainOnFreezeEvent: &falseValue,
+	}
+
+	// test DrainOnFreezeEvent logic
+	testConfigValid.DrainOnFreezeEvent = &falseValue
+	if b := testConfigValid.IsExcludedEvent(types.EventTypeFreeze); b != true {
+		t.Fatal("when DrainOnFreezeEvent is false, IsExcludedEvent must be true")
+	}
+
+	testConfigValid.DrainOnFreezeEvent = &trueValue
+	if b := testConfigValid.IsExcludedEvent(types.EventTypeFreeze); b == true {
+		t.Fatal("when DrainOnFreezeEvent is true, IsExcludedEvent must be false")
 	}
 }
