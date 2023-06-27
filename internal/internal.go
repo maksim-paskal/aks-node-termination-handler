@@ -17,6 +17,7 @@ import (
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/web"
 	"github.com/pkg/errors"
@@ -41,7 +42,7 @@ func Run(ctx context.Context) error {
 		return errors.Wrap(err, "error in init alerts")
 	}
 
-	err = api.Init()
+	err = client.Init()
 	if err != nil {
 		return errors.Wrap(err, "error in init api")
 	}

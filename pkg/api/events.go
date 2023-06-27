@@ -28,7 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var client = &http.Client{
+var httpClient = &http.Client{
 	Transport: metrics.NewInstrumenter("events").InstrumentedRoundTripper(),
 }
 
@@ -53,7 +53,7 @@ func ReadEvents(ctx context.Context, azureResource string) {
 
 		stopReadingEvents, err := readEndpoint(ctx, azureResource)
 		if err != nil {
-			metrics.ErrorReadingEndpoint.Inc()
+			metrics.ErrorReadingEndpoint.WithLabelValues(getsharedMetricsLabels(azureResource)...).Inc()
 
 			log.WithError(err).Error()
 		}
@@ -79,7 +79,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 	req.Header.Add("Metadata", "true")
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return false, errors.Wrap(err, "error in client.Do(req)")
 	}
@@ -103,7 +103,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 			if r == azureResource {
 				log.Info(string(body))
 
-				metrics.ScheduledEventsTotal.WithLabelValues(string(event.EventType)).Inc()
+				metrics.ScheduledEventsTotal.WithLabelValues(append(getsharedMetricsLabels(azureResource), string(event.EventType))...).Inc() //nolint:lll
 
 				nodeEvent := eventMessage{
 					Type:    "Warning",
@@ -140,4 +140,11 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 	}
 
 	return false, nil
+}
+
+func getsharedMetricsLabels(resourceName string) []string {
+	return []string{
+		*config.Get().NodeName,
+		resourceName,
+	}
 }

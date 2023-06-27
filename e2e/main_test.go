@@ -19,6 +19,7 @@ import (
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 )
@@ -34,7 +35,7 @@ func TestDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := api.Init(); err != nil {
+	if err := client.Init(); err != nil {
 		t.Fatal(err)
 	}
 
