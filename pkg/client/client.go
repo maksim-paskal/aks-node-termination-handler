@@ -10,41 +10,45 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package api
+package client
 
 import (
-	"context"
-
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	k8sMetrics "k8s.io/client-go/tools/metrics"
 )
 
 var (
-	Clientset  *kubernetes.Clientset
-	Restconfig *rest.Config
+	clientset  *kubernetes.Clientset
+	restconfig *rest.Config
 )
 
 func Init() error {
 	var err error
 
+	k8sMetrics.Register(k8sMetrics.RegisterOpts{
+		RequestResult:  &requestResult{},
+		RequestLatency: &requestLatency{},
+	})
+
 	if len(*config.Get().KubeConfigFile) > 0 {
-		Restconfig, err = clientcmd.BuildConfigFromFlags("", *config.Get().KubeConfigFile)
+		restconfig, err = clientcmd.BuildConfigFromFlags("", *config.Get().KubeConfigFile)
 		if err != nil {
 			return errors.Wrap(err, "error in clientcmd.BuildConfigFromFlags")
 		}
 	} else {
 		log.Info("No kubeconfig file use incluster")
-		Restconfig, err = rest.InClusterConfig()
+		restconfig, err = rest.InClusterConfig()
 		if err != nil {
 			return errors.Wrap(err, "error in rest.InClusterConfig")
 		}
 	}
 
-	Clientset, err = kubernetes.NewForConfig(Restconfig)
+	clientset, err = kubernetes.NewForConfig(restconfig)
 	if err != nil {
 		log.WithError(err).Fatal()
 	}
@@ -52,11 +56,6 @@ func Init() error {
 	return nil
 }
 
-func Ping(ctx context.Context) error {
-	_, err := GetNode(ctx, *config.Get().NodeName)
-	if err != nil {
-		return errors.Wrap(err, "error in GetNode")
-	}
-
-	return nil
+func GetKubernetesClient() *kubernetes.Clientset {
+	return clientset
 }

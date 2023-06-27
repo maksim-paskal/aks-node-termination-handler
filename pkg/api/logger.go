@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -70,7 +71,7 @@ func addNodeEvent(ctx context.Context, message *eventMessage) error {
 	}
 
 	err = wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
-		_, err = Clientset.CoreV1().Events("default").Create(ctx, &event, metav1.CreateOptions{})
+		_, err = client.GetKubernetesClient().CoreV1().Events("default").Create(ctx, &event, metav1.CreateOptions{})
 		switch {
 		case err == nil:
 			return true, nil

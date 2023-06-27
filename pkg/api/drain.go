@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ const (
 var errAzureProviderIDNotValid = errors.New("azureProviderID not valid")
 
 func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) {
-	node, err := Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	node, err := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrap(err, "error in Clientset.CoreV1().Nodes().Get")
 	}
@@ -80,7 +81,7 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 
 	helper := &drain.Helper{
 		Ctx:                 ctx,
-		Client:              Clientset,
+		Client:              client.GetKubernetesClient(),
 		Force:               true,
 		GracePeriodSeconds:  *config.Get().PodGracePeriodSeconds,
 		IgnoreAllDaemonSets: true,
@@ -120,7 +121,7 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 	var err error
 
 	updateErr := wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
-		if freshNode, err = Clientset.CoreV1().Nodes().Get(ctx, freshNode.Name, metav1.GetOptions{}); err != nil {
+		if freshNode, err = client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, freshNode.Name, metav1.GetOptions{}); err != nil { //nolint:lll
 			nodeErr := errors.Wrapf(err, "failed to get node %s", freshNode.Name)
 			log.Error(nodeErr)
 
@@ -154,13 +155,13 @@ func updateNodeWith(ctx context.Context, taintKey string, taintValue string, nod
 		Value:  taintValue,
 		Effect: corev1.TaintEffect(*config.Get().TaintEffect),
 	})
-	_, err := Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	_, err := client.GetKubernetesClient().CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 
 	return errors.Wrap(err, "failed to update node with taint")
 }
 
 func GetNode(ctx context.Context, nodeName string) (*corev1.Node, error) {
-	node, err := Clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	node, err := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "error in nodes.get")
 	}

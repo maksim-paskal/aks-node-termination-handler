@@ -3,6 +3,7 @@ tag=dev
 image=paskalmaksim/aks-node-termination-handler:$(tag)
 telegramToken=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM
 telegramChatID=-439460552
+node=`kubectl get no -lkubernetes.azure.com/scalesetpriority=spot | awk '{print $$1}' | tail -1` 
 
 chart-lint:
 	ct lint --all
@@ -39,7 +40,7 @@ run:
 	# https://t.me/joinchat/iaWV0bPT_Io5NGYy
 	go run --race ./cmd \
 	-kubeconfig=${KUBECONFIG} \
-	-node=`kubectl get no -lkubernetes.azure.com/scalesetpriority=spot | awk '{print $$1}' | tail -1` \
+	-node=$(node) \
 	-log.level=DEBUG \
 	-log.pretty \
 	-taint.node \

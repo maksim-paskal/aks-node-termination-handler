@@ -84,12 +84,13 @@ func (i *Instrumenter) instrumentRoundTripperEndpoint(counter *prometheus.Counte
 	}
 }
 
-var ErrorReadingEndpoint = promauto.NewCounter(
+var ErrorReadingEndpoint = promauto.NewCounterVec(
 	prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      "error_reading_endpoint_total",
 		Help:      "A counter for errored reading endpoint",
 	},
+	[]string{"node", "resource"},
 )
 
 var ScheduledEventsTotal = promauto.NewCounterVec(
@@ -98,8 +99,20 @@ var ScheduledEventsTotal = promauto.NewCounterVec(
 		Name:      "scheduled_events_total",
 		Help:      "Scheduled Events from Azure",
 	},
-	[]string{"type"},
+	[]string{"node", "resource", "type"},
 )
+
+var KubernetesAPIRequest = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: namespace,
+	Name:      "apiserver_request_total",
+	Help:      "The total number of kunernetes API requests",
+}, []string{"cluster", "code"})
+
+var KubernetesAPIRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Namespace: namespace,
+	Name:      "apiserver_request_duration",
+	Help:      "The duration in seconds of kunernetes API requests",
+}, []string{"cluster"})
 
 func GetHandler() http.Handler {
 	return promhttp.Handler()

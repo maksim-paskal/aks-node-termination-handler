@@ -82,7 +82,7 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check kubernetes API
-	if err := api.Ping(r.Context()); err != nil {
+	if _, err := api.GetNode(r.Context(), *config.Get().NodeName); err != nil {
 		log.WithError(err).Error("kubernetes API is not available")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
