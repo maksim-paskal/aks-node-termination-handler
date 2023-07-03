@@ -17,6 +17,7 @@ import (
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/cache"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/web"
@@ -52,6 +53,7 @@ func Run(ctx context.Context) error {
 		return errors.Wrap(err, "error in getting azure resource name")
 	}
 
+	go cache.SheduleCleaning(ctx)
 	go api.ReadEvents(ctx, azureResource)
 	go web.Start(ctx)
 
