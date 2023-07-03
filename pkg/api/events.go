@@ -17,8 +17,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/cache"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
@@ -27,6 +29,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
+
+const eventCacheTTL = 10 * time.Minute
 
 var httpClient = &http.Client{
 	Transport: metrics.NewInstrumenter("events").InstrumentedRoundTripper(),
@@ -44,13 +48,7 @@ func ReadEvents(ctx context.Context, azureResource string) {
 		log.WithError(err).Error()
 	}
 
-	for {
-		if ctx.Err() != nil {
-			log.Info("Context canceled")
-
-			return
-		}
-
+	for ctx.Err() == nil {
 		stopReadingEvents, err := readEndpoint(ctx, azureResource)
 		if err != nil {
 			metrics.ErrorReadingEndpoint.WithLabelValues(getsharedMetricsLabels(azureResource)...).Inc()
@@ -100,8 +98,17 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 	for _, event := range message.Events {
 		for _, r := range event.Resources {
-			if r == azureResource {
+			if r == azureResource { //nolint:nestif
 				log.Info(string(body))
+
+				if cache.HasKey(event.EventId) {
+					log.Infof("Event %s already processed", event.EventId)
+
+					continue
+				}
+
+				// add to cache, ignore similar events for 10 minutes
+				cache.Add(event.EventId, eventCacheTTL)
 
 				metrics.ScheduledEventsTotal.WithLabelValues(append(getsharedMetricsLabels(azureResource), string(event.EventType))...).Inc() //nolint:lll
 
