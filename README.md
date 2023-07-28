@@ -8,6 +8,53 @@ This tool ensures that kubernetes cluster responds appropriately to events that 
 
 Based on [Azure Scheduled Events](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events) and [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/)
 
+## Create Azure Kubernetes Cluster with Spot Virtual Machines
+
+[Create an AKS cluster](https://learn.microsoft.com/en-us/azure/aks/learn/quick-kubernetes-deploy-cli) and at least one [Azure Spot node pool](https://learn.microsoft.com/en-us/azure/aks/spot-node-pool), [Azure Scheduled Events](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-terminate-notification#get-terminate-notifications) will automatically enabled for all Spot Virtual Machines in Azure Kubernetes Cluster.
+
+<details>
+  <summary>Create basic AKS cluster with Azure CLI</summary>
+
+```bash
+# Azure CLI version is 2.50.0
+az --version
+
+# Create resource group
+az group create \
+--name test-aks-group-eastus \
+--location eastus
+
+# Create aks cluster, with at least one system node
+az aks create \
+--resource-group test-aks-group-eastus \
+--name MyManagedCluster \
+--node-count 1 \
+--node-vm-size Standard_DS2_v2 \
+--enable-cluster-autoscaler \
+--min-count 1 \
+--max-count 3
+
+# Create nodepool with Spot Virtual Machines and autoscaling
+az aks nodepool add \
+--resource-group test-aks-group-eastus \
+--cluster-name MyManagedCluster \
+--name spotpool \
+--priority Spot \
+--eviction-policy Delete \
+--spot-max-price -1 \
+--enable-cluster-autoscaler \
+--node-vm-size Standard_DS2_v2 \
+--min-count 0 \
+--max-count 10
+
+# Get config to connect to cluster
+az aks get-credentials \
+--resource-group test-aks-group-eastus \
+--name MyManagedCluster \
+--file=~/.kube/config
+```
+</details>
+
 ## Installation
 
 ```bash
