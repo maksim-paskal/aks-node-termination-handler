@@ -8,14 +8,14 @@ This tool ensures that kubernetes cluster responds appropriately to events that 
 
 Based on [Azure Scheduled Events](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events) and [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/)
 
-## Create Azure Kubernetes Cluster with Spot Virtual Machines
-
-[Create an AKS cluster](https://learn.microsoft.com/en-us/azure/aks/learn/quick-kubernetes-deploy-cli) and at least one [Azure Spot node pool](https://learn.microsoft.com/en-us/azure/aks/spot-node-pool), [Azure Scheduled Events](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-terminate-notification#get-terminate-notifications) will automatically enabled for all Spot Virtual Machines in Azure Kubernetes Cluster.
+## Create Azure Kubernetes Cluster
 
 <details>
   <summary>Create basic AKS cluster with Azure CLI</summary>
 
 ```bash
+# https://learn.microsoft.com/en-us/azure/aks/learn/quick-kubernetes-deploy-cli
+
 # Azure CLI version is 2.50.0
 az --version
 
@@ -24,7 +24,7 @@ az group create \
 --name test-aks-group-eastus \
 --location eastus
 
-# Create aks cluster, with at least one system node
+# Create aks cluster, with not spot instances
 az aks create \
 --resource-group test-aks-group-eastus \
 --name MyManagedCluster \
@@ -50,9 +50,9 @@ az aks nodepool add \
 # Get config to connect to cluster
 az aks get-credentials \
 --resource-group test-aks-group-eastus \
---name MyManagedCluster \
---file=~/.kube/config
+--name MyManagedCluster
 ```
+
 </details>
 
 ## Installation

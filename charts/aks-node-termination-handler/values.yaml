@@ -17,8 +17,10 @@ tolerations:
   value: "spot"
   effect: "NoSchedule"
 
-nodeSelector:
-  kubernetes.azure.com/scalesetpriority: spot
+nodeSelector: {}
+# if you want handle events only from spot instances
+# nodeSelector:
+#   kubernetes.azure.com/scalesetpriority: spot
 
 resources:
   limits:
