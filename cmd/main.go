@@ -54,7 +54,10 @@ func main() { //nolint:funlen
 		log.SetFormatter(&log.JSONFormatter{})
 	}
 
-	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
 		SentryDSN: *config.Get().SentryDSN,
 		Release:   config.GetVersion(),
 	})
@@ -63,10 +66,6 @@ func main() { //nolint:funlen
 	}
 
 	log.AddHook(hook)
-	defer hook.Stop()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	signalChanInterrupt := make(chan os.Signal, 1)
 	signal.Notify(signalChanInterrupt, syscall.SIGINT, syscall.SIGTERM)

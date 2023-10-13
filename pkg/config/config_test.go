@@ -110,9 +110,10 @@ func TestConfig(t *testing.T) {
 			err:         true,
 		},
 	}
-	//nolint:scopelint
-	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(testCase.testName, func(t *testing.T) {
 			newConfig := config.Type{
 				TaintEffect:    &tc.taintEffect,
 				NodeName:       &tc.nodeName,
