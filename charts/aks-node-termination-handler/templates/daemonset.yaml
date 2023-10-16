@@ -67,8 +67,12 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 17923
+            port: http
             scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 5
+        ports:
+        - name: http
+          containerPort: 17923
+          protocol: TCP
