@@ -13,10 +13,14 @@ limitations under the License.
 package metrics
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,12 +32,16 @@ const namespace = "aks_node_termination_handler"
 
 type Instrumenter struct {
 	subsystemIdentifier string
+	insecureSkipVerify  bool
 }
 
 // New creates a new Instrumenter. The subsystemIdentifier will be used as part of
 // the metric names (e.g. http_<identifier>_requests_total).
-func NewInstrumenter(subsystemIdentifier string) *Instrumenter {
-	return &Instrumenter{subsystemIdentifier: subsystemIdentifier}
+func NewInstrumenter(subsystemIdentifier string, insecureSkipVerify bool) *Instrumenter {
+	return &Instrumenter{
+		subsystemIdentifier: subsystemIdentifier,
+		insecureSkipVerify:  insecureSkipVerify,
+	}
 }
 
 // InstrumentedRoundTripper returns an instrumented round tripper.
@@ -66,7 +74,11 @@ func (i *Instrumenter) InstrumentedRoundTripper() http.RoundTripper {
 	return promhttp.InstrumentRoundTripperInFlight(inFlightRequestsGauge,
 		promhttp.InstrumentRoundTripperDuration(requestLatencyHistogram,
 			i.instrumentRoundTripperEndpoint(requestsPerEndpointCounter,
-				http.DefaultTransport,
+				&http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: i.insecureSkipVerify, //nolint:gosec
+					},
+				},
 			),
 		),
 	)
@@ -116,4 +128,20 @@ var KubernetesAPIRequestDuration = promauto.NewHistogramVec(prometheus.Histogram
 
 func GetHandler() http.Handler {
 	return promhttp.Handler()
+}
+
+type KubernetesMetricsResult struct {
+	Cluster string
+}
+
+func (r *KubernetesMetricsResult) Increment(_ context.Context, code string, _ string, host string) {
+	KubernetesAPIRequest.WithLabelValues(host, code).Inc()
+}
+
+type KubernetesMetricsLatency struct {
+	Cluster string
+}
+
+func (r *KubernetesMetricsLatency) Observe(_ context.Context, _ string, u url.URL, latency time.Duration) {
+	KubernetesAPIRequestDuration.WithLabelValues(u.Host).Observe(latency.Seconds())
 }

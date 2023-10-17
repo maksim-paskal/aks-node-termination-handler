@@ -18,8 +18,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/logger"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -77,7 +80,10 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		}
 	}
 
-	logger := &KubectlLogger{}
+	logger := &logger.KubectlLogger{}
+	logger.Log = func(message string) {
+		log.Info(message)
+	}
 
 	helper := &drain.Helper{
 		Ctx:                 ctx,
@@ -167,4 +173,52 @@ func GetNode(ctx context.Context, nodeName string) (*corev1.Node, error) {
 	}
 
 	return node, nil
+}
+
+func AddNodeEvent(ctx context.Context, message *types.EventMessage) error {
+	node, err := GetNode(ctx, *config.Get().NodeName)
+	if err != nil {
+		return errors.Wrap(err, "error in GetNode")
+	}
+
+	event := corev1.Event{
+		InvolvedObject: corev1.ObjectReference{
+			APIVersion:      "v1",
+			Kind:            "Node",
+			Name:            node.Name,
+			UID:             node.UID,
+			ResourceVersion: node.ResourceVersion,
+		},
+		Count:          1,
+		FirstTimestamp: metav1.Now(),
+		LastTimestamp:  metav1.Now(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("%s.%s", *config.Get().NodeName, uuid.New().String()),
+		},
+		Type:    message.Type,
+		Reason:  message.Reason,
+		Message: message.Message,
+		Source: corev1.EventSource{
+			Component: "aks-node-termination-handler",
+		},
+	}
+
+	err = wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
+		_, err = client.GetKubernetesClient().CoreV1().Events("default").Create(ctx, &event, metav1.CreateOptions{})
+		switch {
+		case err == nil:
+			return true, nil
+		case apierrorrs.IsConflict(err):
+			return false, nil
+		case err != nil:
+			return false, errors.Wrap(err, "failed to create event")
+		}
+
+		return false, nil
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to add event")
+	}
+
+	return nil
 }

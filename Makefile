@@ -11,9 +11,9 @@ chart-lint:
 
 build:
 	git tag -d `git tag -l "helm-chart-*"`
-	go run github.com/goreleaser/goreleaser@latest build --rm-dist --skip-validate --snapshot
+	go run github.com/goreleaser/goreleaser@latest build --clean --skip=validate --snapshot
 	mv ./dist/aks-node-termination-handler_linux_amd64_v1/aks-node-termination-handler aks-node-termination-handler
-	docker build --pull . -t $(image)
+	docker build --pull --push . -t $(image)
 
 push:
 	docker push $(image)
@@ -46,6 +46,7 @@ run:
 	-taint.node \
 	-taint.effect=NoExecute \
 	-podGracePeriodSeconds=30 \
+	-gracePeriodSeconds=0 \
 	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json \
 	-webhook.url=http://localhost:9091/metrics/job/aks-node-termination-handler \
 	-webhook.template='node_termination_event{node="{{ .Node }}"} 1' \

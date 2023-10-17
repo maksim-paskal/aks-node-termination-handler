@@ -1,0 +1,2 @@
+taintNode: true
+taintEffect: NoSchedule

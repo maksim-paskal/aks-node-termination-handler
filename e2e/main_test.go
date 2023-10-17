@@ -22,12 +22,15 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 )
 
 var ctx = context.Background()
 
 func TestDrain(t *testing.T) {
 	t.Parallel()
+
+	_ = flag.Set("config", "./testdata/config_test.yaml")
 
 	flag.Parse()
 
@@ -48,6 +51,14 @@ func TestDrain(t *testing.T) {
 	}
 
 	if err := api.DrainNode(ctx, *config.Get().NodeName, "Preempt", "manual"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := api.AddNodeEvent(ctx, &types.EventMessage{
+		Type:    "Info",
+		Reason:  "TestDrain",
+		Message: "TestDrain",
+	}); err != nil {
 		t.Fatal(err)
 	}
 }

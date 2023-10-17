@@ -14,6 +14,7 @@ package config_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
@@ -32,18 +33,37 @@ func TestConfigDefaults(t *testing.T) {
 //nolint:paralleltest
 func TestValidConfigFile(t *testing.T) {
 	configFile := "./testdata/config_test.yaml"
-	newConfig := config.Type{ConfigFile: &configFile}
+	testPeriod := 123
+
+	newConfig := config.Type{
+		ConfigFile:             &configFile,
+		GracePeriodSeconds:     &testPeriod,
+		NodeGracePeriodSeconds: &testPeriod,
+	}
 	config.Set(newConfig)
 
 	err := config.Load()
 	assert.NoError(t, err)
 
 	assert.Equal(t, "/some/test/path", *config.Get().KubeConfigFile)
+	assert.Equal(t, time.Duration(testPeriod)*time.Second, config.Get().GracePeriod())
+	assert.Equal(t, time.Duration(testPeriod)*time.Second, config.Get().NodeGracePeriod())
+	assert.Contains(t, config.Get().String(), "123")
 }
 
 //nolint:paralleltest
 func TestInvalidConfigFile(t *testing.T) {
 	configFile := "testdata/config_yaml_fake.yaml"
+	newConfig := config.Type{ConfigFile: &configFile}
+	config.Set(newConfig)
+
+	err := config.Load()
+	assert.Error(t, err)
+}
+
+//nolint:paralleltest
+func TestNotFoundConfigFile(t *testing.T) {
+	configFile := "testdata/fake.yaml"
 	newConfig := config.Type{ConfigFile: &configFile}
 	config.Set(newConfig)
 
@@ -106,6 +126,13 @@ func TestConfig(t *testing.T) {
 			testName:    "InvalidNodeName",
 			taintEffect: "NoSchedule",
 			nodeName:    "",
+			telegramID:  "1",
+			err:         true,
+		},
+		{
+			testName:    "InvalidTaintEffect",
+			taintEffect: "InvalidTaintEffect",
+			nodeName:    "validNode",
 			telegramID:  "1",
 			err:         true,
 		},

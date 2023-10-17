@@ -50,7 +50,7 @@ func Start(ctx context.Context) {
 		_ = server.Shutdown(shutdownCtx) //nolint:contextcheck
 	}()
 
-	if err := server.ListenAndServe(); err != nil {
+	if err := server.ListenAndServe(); err != nil && ctx.Err() == nil {
 		log.WithError(err).Fatal()
 	}
 }

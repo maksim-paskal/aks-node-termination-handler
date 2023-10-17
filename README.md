@@ -1,5 +1,7 @@
 # AKS Node Termination Handler
 
+[![codecov](https://codecov.io/gh/maksim-paskal/aks-node-termination-handler/graph/badge.svg?token=0Z0ENDM8VW)](https://codecov.io/gh/maksim-paskal/aks-node-termination-handler)
+
 Gracefully handle Azure Virtual Machines shutdown within Kubernetes
 
 ## Motivation

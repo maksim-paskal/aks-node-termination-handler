@@ -32,6 +32,8 @@ const (
 	defaultPodGracePeriodSeconds  = -1
 	defaultNodeGracePeriodSeconds = 120
 	defaultGracePeriodSecond      = 10
+	defaultRequestTimeout         = 1 * time.Second
+	defaultWebHookTimeout         = 5 * time.Second
 )
 
 var (
@@ -49,13 +51,15 @@ type Type struct {
 	Endpoint               *string
 	NodeName               *string
 	Period                 *time.Duration
+	RequestTimeout         *time.Duration
 	TelegramToken          *string
 	TelegramChatID         *string
 	AlertMessage           *string
-	WebHookInsecure        *bool
 	WebHookContentType     *string
 	WebHookURL             *string
 	WebHookTemplate        *string
+	WebHookMethod          *string
+	WebHookTimeout         *time.Duration
 	SentryDSN              *string
 	WebHTTPAddress         *string
 	TaintNode              *bool
@@ -74,12 +78,14 @@ var config = Type{
 	Endpoint:               flag.String("endpoint", azureEndpoint, "scheduled-events endpoint"),
 	NodeName:               flag.String("node", os.Getenv("MY_NODE_NAME"), "node to drain"),
 	Period:                 flag.Duration("period", defaultPeriod, "period to scrape endpoint"),
+	RequestTimeout:         flag.Duration("request.timeout", defaultRequestTimeout, "request timeout"),
 	TelegramToken:          flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
 	TelegramChatID:         flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
 	AlertMessage:           flag.String("alert.message", defaultAlertMessage, "default message"),
+	WebHookMethod:          flag.String("webhook.method", "POST", "request method"),
 	WebHookContentType:     flag.String("webhook.contentType", "application/json", "request content-type header"),
-	WebHookInsecure:        flag.Bool("webhook.insecure", false, "use insecure tls config"),
 	WebHookURL:             flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
+	WebHookTimeout:         flag.Duration("webhook.timeout", defaultWebHookTimeout, "request timeout"),
 	WebHookTemplate:        flag.String("webhook.template", "test", "request body"),
 	SentryDSN:              flag.String("sentry.dsn", "", "sentry DSN"),
 	WebHTTPAddress:         flag.String("web.address", ":17923", ""),

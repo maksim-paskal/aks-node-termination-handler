@@ -14,6 +14,7 @@ package client
 
 import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -31,8 +32,8 @@ func Init() error {
 	var err error
 
 	k8sMetrics.Register(k8sMetrics.RegisterOpts{
-		RequestResult:  &requestResult{},
-		RequestLatency: &requestLatency{},
+		RequestResult:  &metrics.KubernetesMetricsResult{},
+		RequestLatency: &metrics.KubernetesMetricsLatency{},
 	})
 
 	if len(*config.Get().KubeConfigFile) > 0 {
