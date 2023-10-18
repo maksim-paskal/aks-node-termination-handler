@@ -48,3 +48,9 @@ type ScheduledEventsType struct {
 	DocumentIncarnation int
 	Events              []ScheduledEventsEvent
 }
+
+type EventMessage struct {
+	Type    string
+	Reason  string
+	Message string
+}

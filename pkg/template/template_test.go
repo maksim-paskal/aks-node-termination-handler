@@ -73,3 +73,16 @@ func TestFakeTemplate(t *testing.T) {
 		t.Fatal("must be error")
 	}
 }
+
+func TestFakeTemplateFunc(t *testing.T) {
+	t.Parallel()
+
+	_, err := template.Message(template.MessageType{
+		Template: "{{ .DDD }}",
+	})
+	if err == nil {
+		t.Fatal("must be error")
+	}
+
+	t.Log(err)
+}

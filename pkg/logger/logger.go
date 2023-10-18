@@ -10,28 +10,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package client
+package logger
 
-import (
-	"context"
-	"net/url"
-	"time"
-
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
-)
-
-type requestResult struct {
-	Cluster string
+type KubectlLogger struct {
+	Log func(string)
 }
 
-func (r *requestResult) Increment(_ context.Context, code string, _ string, host string) {
-	metrics.KubernetesAPIRequest.WithLabelValues(host, code).Inc()
-}
+func (b *KubectlLogger) Write(p []byte) (int, error) {
+	if b.Log != nil {
+		b.Log(string(p))
+	}
 
-type requestLatency struct {
-	Cluster string
-}
-
-func (r *requestLatency) Observe(_ context.Context, _ string, u url.URL, latency time.Duration) {
-	metrics.KubernetesAPIRequestDuration.WithLabelValues(u.Host).Observe(latency.Seconds())
+	return 0, nil
 }

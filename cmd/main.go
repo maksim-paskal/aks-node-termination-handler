@@ -29,7 +29,7 @@ import (
 
 var version = flag.Bool("version", false, "version")
 
-func main() { //nolint:funlen
+func main() {
 	flag.Parse()
 
 	if *version {
@@ -37,18 +37,13 @@ func main() { //nolint:funlen
 		os.Exit(0)
 	}
 
-	log.Infof("Starting %s...", config.GetVersion())
-
 	logLevel, err := log.ParseLevel(*config.Get().LogLevel)
 	if err != nil {
 		log.WithError(err).Fatal()
 	}
 
 	log.SetLevel(logLevel)
-
-	if logLevel >= log.DebugLevel {
-		log.SetReportCaller(true)
-	}
+	log.SetReportCaller(true)
 
 	if !*config.Get().LogPretty {
 		log.SetFormatter(&log.JSONFormatter{})
@@ -56,6 +51,8 @@ func main() { //nolint:funlen
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	log.Infof("Starting %s...", config.GetVersion())
 
 	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
 		SentryDSN: *config.Get().SentryDSN,
@@ -72,8 +69,6 @@ func main() { //nolint:funlen
 
 	log.RegisterExitHandler(func() {
 		cancel()
-		// wait before shutdown
-		time.Sleep(config.Get().GracePeriod())
 	})
 
 	go func() {
@@ -93,5 +88,6 @@ func main() { //nolint:funlen
 
 	<-ctx.Done()
 
-	log.Info("Shutdown")
+	log.Infof("Waiting %s before shutdown...", config.Get().GracePeriod())
+	time.Sleep(config.Get().GracePeriod())
 }

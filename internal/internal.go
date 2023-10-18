@@ -20,6 +20,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/cache"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/events"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/web"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -54,7 +55,7 @@ func Run(ctx context.Context) error {
 	}
 
 	go cache.SheduleCleaning(ctx)
-	go api.ReadEvents(ctx, azureResource)
+	go events.ReadEvents(ctx, azureResource)
 	go web.Start(ctx)
 
 	return nil

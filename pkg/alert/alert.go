@@ -13,36 +13,18 @@ limitations under the License.
 package alert
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"fmt"
-	"net/http"
 	"strconv"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-var errHTTPNotOK = errors.New("http result not OK")
-
-const httpRequestTimeout = 5 * time.Second
-
-var (
-	bot    *tgbotapi.BotAPI
-	client = &http.Client{
-		Timeout: httpRequestTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: *config.Get().WebHookInsecure, //nolint:gosec
-			},
-		},
-	}
-)
+var bot *tgbotapi.BotAPI
 
 func Init() error {
 	if len(*config.Get().TelegramToken) == 0 {
@@ -79,7 +61,7 @@ func SendALL(ctx context.Context, obj template.MessageType) error {
 		return errors.Wrap(err, "error in sending to telegram")
 	}
 
-	if err := SendWebHook(ctx, obj); err != nil {
+	if err := webhook.SendWebHook(ctx, obj); err != nil {
 		return errors.Wrap(err, "error in sending to webhook")
 	}
 
@@ -109,42 +91,6 @@ func SendTelegram(obj template.MessageType) error {
 	}
 
 	log.Infof("Telegram MessageID=%d", result.MessageID)
-
-	return nil
-}
-
-func SendWebHook(ctx context.Context, obj template.MessageType) error {
-	if len(*config.Get().WebHookURL) == 0 {
-		return nil
-	}
-
-	webhookBody, err := template.Message(template.MessageType{
-		Node:     obj.Node,
-		Event:    obj.Event,
-		Template: *config.Get().WebHookTemplate,
-	})
-	if err != nil {
-		return errors.Wrap(err, "error in template.Message")
-	}
-
-	requestBody := bytes.NewBufferString(fmt.Sprintf("%s\n", webhookBody))
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, *config.Get().WebHookURL, requestBody)
-	if err != nil {
-		return errors.Wrap(err, "error in http.NewRequestWithContext")
-	}
-
-	req.Header.Set("Content-Type", *config.Get().WebHookContentType)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "error in client.Do")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
-	}
 
 	return nil
 }

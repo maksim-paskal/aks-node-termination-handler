@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package api
+package events
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/cache"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
@@ -33,18 +34,18 @@ import (
 const eventCacheTTL = 10 * time.Minute
 
 var httpClient = &http.Client{
-	Transport: metrics.NewInstrumenter("events").InstrumentedRoundTripper(),
+	Transport: metrics.NewInstrumenter("events", false).InstrumentedRoundTripper(),
 }
 
 func ReadEvents(ctx context.Context, azureResource string) {
 	log.Infof("Watching for resource in events %s", azureResource)
 
-	nodeEvent := eventMessage{
+	nodeEvent := types.EventMessage{
 		Type:    "Info",
 		Reason:  "ReadEvents",
 		Message: "Start to listen events from Azure API",
 	}
-	if err := addNodeEvent(ctx, &nodeEvent); err != nil {
+	if err := api.AddNodeEvent(ctx, &nodeEvent); err != nil {
 		log.WithError(err).Error()
 	}
 
@@ -68,6 +69,9 @@ func ReadEvents(ctx context.Context, azureResource string) {
 }
 
 func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //nolint:cyclop,funlen
+	ctx, cancel := context.WithTimeout(ctx, *config.Get().RequestTimeout)
+	defer cancel()
+
 	log.Debugf("read %s", *config.Get().Endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)
@@ -112,12 +116,12 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 				metrics.ScheduledEventsTotal.WithLabelValues(append(getsharedMetricsLabels(azureResource), string(event.EventType))...).Inc() //nolint:lll
 
-				nodeEvent := eventMessage{
+				nodeEvent := types.EventMessage{
 					Type:    "Warning",
 					Reason:  string(event.EventType),
 					Message: "Azure API sended schedule event for this node",
 				}
-				if err := addNodeEvent(ctx, &nodeEvent); err != nil {
+				if err := api.AddNodeEvent(ctx, &nodeEvent); err != nil {
 					log.WithError(err).Error()
 				}
 
@@ -136,7 +140,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 					log.WithError(err).Error("error in alerts.Send")
 				}
 
-				err = DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId)
+				err = api.DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId)
 				if err != nil {
 					return false, errors.Wrap(err, "error in DrainNode")
 				}
