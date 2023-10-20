@@ -19,6 +19,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //nolint:paralleltest
@@ -43,7 +44,7 @@ func TestValidConfigFile(t *testing.T) {
 	config.Set(newConfig)
 
 	err := config.Load()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "/some/test/path", *config.Get().KubeConfigFile)
 	assert.Equal(t, time.Duration(testPeriod)*time.Second, config.Get().GracePeriod())
@@ -58,7 +59,7 @@ func TestInvalidConfigFile(t *testing.T) {
 	config.Set(newConfig)
 
 	err := config.Load()
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 //nolint:paralleltest
@@ -68,7 +69,7 @@ func TestNotFoundConfigFile(t *testing.T) {
 	config.Set(newConfig)
 
 	err := config.Load()
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 //nolint:paralleltest
@@ -149,9 +150,9 @@ func TestConfig(t *testing.T) {
 			config.Set(newConfig)
 			err := config.Check()
 			if tc.err {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}
