@@ -69,12 +69,12 @@ func ReadEvents(ctx context.Context, azureResource string) {
 }
 
 func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //nolint:cyclop,funlen
-	ctx, cancel := context.WithTimeout(ctx, *config.Get().RequestTimeout)
+	reqCtx, cancel := context.WithTimeout(ctx, *config.Get().RequestTimeout)
 	defer cancel()
 
 	log.Debugf("read %s", *config.Get().Endpoint)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, *config.Get().Endpoint, nil)
 	if err != nil {
 		return false, errors.Wrap(err, "error in http.NewRequestWithContext")
 	}
