@@ -23,7 +23,7 @@ import (
 func TestCache(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
 	go cache.SheduleCleaning(ctx)

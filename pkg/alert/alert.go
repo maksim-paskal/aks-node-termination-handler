@@ -13,13 +13,11 @@ limitations under the License.
 package alert
 
 import (
-	"context"
 	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -56,19 +54,7 @@ func Ping() error {
 	return nil
 }
 
-func SendALL(ctx context.Context, obj template.MessageType) error {
-	if err := SendTelegram(obj); err != nil {
-		return errors.Wrap(err, "error in sending to telegram")
-	}
-
-	if err := webhook.SendWebHook(ctx, obj); err != nil {
-		return errors.Wrap(err, "error in sending to webhook")
-	}
-
-	return nil
-}
-
-func SendTelegram(obj template.MessageType) error {
+func SendTelegram(obj *template.MessageType) error {
 	if len(*config.Get().TelegramToken) == 0 {
 		return nil
 	}

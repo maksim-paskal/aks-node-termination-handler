@@ -27,7 +27,7 @@ import (
 var (
 	client = &http.Client{}
 	ts     = httptest.NewServer(metrics.GetHandler())
-	ctx    = context.Background()
+	ctx    = context.TODO()
 )
 
 func TestMetricsInc(t *testing.T) {

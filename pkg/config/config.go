@@ -27,13 +27,13 @@ import (
 
 const (
 	azureEndpoint                 = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
-	defaultAlertMessage           = "Draining node={{ .Node }}, type={{ .Event.EventType }}"
+	defaultAlertMessage           = "Draining node={{ .NodeName }}, type={{ .Event.EventType }}"
 	defaultPeriod                 = 5 * time.Second
 	defaultPodGracePeriodSeconds  = -1
 	defaultNodeGracePeriodSeconds = 120
 	defaultGracePeriodSecond      = 10
 	defaultRequestTimeout         = 1 * time.Second
-	defaultWebHookTimeout         = 5 * time.Second
+	defaultWebHookTimeout         = 30 * time.Second
 )
 
 var (
@@ -58,6 +58,7 @@ type Type struct {
 	WebHookContentType     *string
 	WebHookURL             *string
 	WebHookTemplate        *string
+	WebHookTemplateFile    *string
 	WebHookMethod          *string
 	WebHookTimeout         *time.Duration
 	SentryDSN              *string
@@ -86,7 +87,8 @@ var config = Type{
 	WebHookContentType:     flag.String("webhook.contentType", "application/json", "request content-type header"),
 	WebHookURL:             flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
 	WebHookTimeout:         flag.Duration("webhook.timeout", defaultWebHookTimeout, "request timeout"),
-	WebHookTemplate:        flag.String("webhook.template", "test", "request body"),
+	WebHookTemplate:        flag.String("webhook.template", os.Getenv("WEBHOOK_TEMPLATE"), "request body"),
+	WebHookTemplateFile:    flag.String("webhook.template-file", os.Getenv("WEBHOOK_TEMPLATE_FILE"), "path to request body template file"), //nolint:lll
 	SentryDSN:              flag.String("sentry.dsn", "", "sentry DSN"),
 	WebHTTPAddress:         flag.String("web.address", ":17923", ""),
 	TaintNode:              flag.Bool("taint.node", false, "Taint the node before cordon and draining"),

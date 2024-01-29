@@ -36,6 +36,13 @@ spec:
       nodeSelector:
 {{- toYaml .Values.nodeSelector | nindent 8 }}
 {{- end }}
+      volumes:
+      - name: files
+        configMap:
+          name: {{ .Values.configMap.name }}
+      {{ if .Values.extraVolumes }}
+      {{ toYaml .Values.extraVolumes | indent 6 }}
+      {{ end }}
       containers:
       - name: aks-node-termination-handler
         resources:
@@ -76,3 +83,10 @@ spec:
         - name: http
           containerPort: 17923
           protocol: TCP
+        volumeMounts:
+        - name: files
+          mountPath: {{ .Values.configMap.mountPath }}
+          readOnly: true
+        {{ if .Values.extraVolumeMounts}}
+        {{ toYaml .Values.extraVolumeMounts | indent 8 }}
+        {{ end }}
