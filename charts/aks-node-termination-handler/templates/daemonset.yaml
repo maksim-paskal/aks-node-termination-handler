@@ -50,15 +50,7 @@ spec:
         image: {{ .Values.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         securityContext:
-          runAsNonRoot: true
-          runAsUser: 30523
-          runAsGroup: 30523
-          privileged: false
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
+{{ toYaml .Values.securityContext | indent 10 }}
         args:
         {{- range .Values.args }}
         - {{ . }}

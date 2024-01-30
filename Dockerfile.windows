@@ -1,0 +1,8 @@
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
+
+WORKDIR /app/
+
+COPY ./aks-node-termination-handler.exe /app/aks-node-termination-handler.exe
+USER ContainerUser
+
+ENTRYPOINT [ "/app/aks-node-termination-handler.exe" ]

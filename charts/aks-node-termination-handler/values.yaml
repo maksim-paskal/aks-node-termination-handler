@@ -29,6 +29,17 @@ extraVolumeMounts: []
 metrics:
   addAnnotations: true
 
+securityContext:
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  windowsOptions:
+    runAsUserName: "ContainerUser"
+
 tolerations:
 - key: "kubernetes.azure.com/scalesetpriority"
   operator: "Equal"
@@ -42,7 +53,6 @@ nodeSelector: {}
 
 resources:
   limits:
-    cpu: 20m
     memory: 100Mi
   requests:
     cpu: 20m
