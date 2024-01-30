@@ -95,7 +95,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 	}
 
 	if len(body) == 0 {
-		log.Info("Scheduled events response is empty")
+		log.Info("Events response is empty")
 		return false, nil
 	}
 
