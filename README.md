@@ -12,6 +12,8 @@ This tool ensures that kubernetes cluster responds appropriately to events that 
 
 Based on [Azure Scheduled Events](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events) and [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/)
 
+Support Linux (amd64, arm64) and Windows (amd64) nodes.
+
 ## Create Azure Kubernetes Cluster
 
 <details>
@@ -38,7 +40,7 @@ az aks create \
 --min-count 1 \
 --max-count 3
 
-# Create nodepool with Spot Virtual Machines and autoscaling
+# Create Linux nodepool with Spot Virtual Machines and autoscaling
 az aks nodepool add \
 --resource-group test-aks-group-eastus \
 --cluster-name MyManagedCluster \
@@ -50,6 +52,19 @@ az aks nodepool add \
 --node-vm-size Standard_DS2_v2 \
 --min-count 0 \
 --max-count 10
+
+# Create Windows nodepool with Spot Virtual Machines and autoscaling
+az aks nodepool add \
+--resource-group test-aks-group-eastus \
+--cluster-name MyManagedCluster \
+--os-type Windows \
+--priority Spot \
+--eviction-policy Delete \
+--spot-max-price -1 \
+--enable-cluster-autoscaler \
+--name spot01 \
+--min-count 1 \
+--max-count 3
 
 # Get config to connect to cluster
 az aks get-credentials \
