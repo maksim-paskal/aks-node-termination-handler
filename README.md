@@ -12,6 +12,8 @@ This tool ensures that kubernetes cluster responds appropriately to events that 
 
 Based on [Azure Scheduled Events](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events) and [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/)
 
+Support Linux (amd64, arm64) and Windows (amd64) nodes.
+
 ## Create Azure Kubernetes Cluster
 
 <details>
@@ -38,7 +40,7 @@ az aks create \
 --min-count 1 \
 --max-count 3
 
-# Create nodepool with Spot Virtual Machines and autoscaling
+# Create Linux nodepool with Spot Virtual Machines and autoscaling
 az aks nodepool add \
 --resource-group test-aks-group-eastus \
 --cluster-name MyManagedCluster \
@@ -50,6 +52,19 @@ az aks nodepool add \
 --node-vm-size Standard_DS2_v2 \
 --min-count 0 \
 --max-count 10
+
+# Create Windows nodepool with Spot Virtual Machines and autoscaling
+az aks nodepool add \
+--resource-group test-aks-group-eastus \
+--cluster-name MyManagedCluster \
+--os-type Windows \
+--priority Spot \
+--eviction-policy Delete \
+--spot-max-price -1 \
+--enable-cluster-autoscaler \
+--name spot01 \
+--min-count 1 \
+--max-count 3
 
 # Get config to connect to cluster
 az aks get-credentials \
@@ -72,9 +87,12 @@ aks-node-termination-handler/aks-node-termination-handler \
 --set priorityClassName=system-node-critical
 ```
 
-## Alerting
+## Send notification events
 
-To make alerts to Telegram or Slack or Webhook
+You can compose your payload with markers that described [here](pkg/template/README.md)
+
+<details>
+  <summary>Send Telegram notification</summary>
 
 ```bash
 helm upgrade aks-node-termination-handler \
@@ -82,11 +100,74 @@ helm upgrade aks-node-termination-handler \
 --namespace kube-system \
 aks-node-termination-handler/aks-node-termination-handler \
 --set priorityClassName=system-node-critical \
---set args[0]=-telegram.token=<telegram token> \
---set args[1]=-telegram.chatID=<telegram chatid> \
---set args[2]=-webhook.url=http://prometheus-pushgateway.prometheus.svc.cluster.local:9091/metrics/job/aks-node-termination-handler \
---set args[3]=-webhook.template='node_termination_event{node="{{ .Node }}"} 1'
+--set 'args[0]=-telegram.token=<telegram token>' \
+--set 'args[1]=-telegram.chatID=<telegram chatid>'
 ```
+</details>
+
+<details>
+  <summary>Send Slack notification</summary>
+
+```bash
+# create payload file
+cat <<EOF | tee values.yaml
+priorityClassName: system-node-critical
+
+args:
+- -webhook.url=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+- -webhook.template-file=/files/slack-payload.json
+- -webhook.contentType=application/json
+- -webhook.method=POST
+- -webhook.timeout=30s
+
+configMap:
+  data:
+    slack-payload.json: |
+      {
+        "channel": "#mychannel",
+        "username": "webhookbot",
+        "text": "This is message for {{ .NodeName }}, {{ .InstanceType }} from {{ .NodeRegion }}",
+        "icon_emoji": ":ghost:"
+      }
+EOF
+
+# install/upgrade helm chart
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--values values.yaml
+```
+</details>
+
+<details>
+  <summary>Send Prometheus Pushgateway event</summary>
+
+```bash
+cat <<EOF | tee values.yaml
+priorityClassName: system-node-critical
+
+args:
+- -webhook.url=http://prometheus-pushgateway.prometheus.svc.cluster.local:9091/metrics/job/aks-node-termination-handler
+- -webhook.template-file=/files/prometheus-pushgateway-payload.txt
+- -webhook.contentType=text/plain
+- -webhook.method=POST
+- -webhook.timeout=30s
+
+configMap:
+  data:
+    prometheus-pushgateway-payload.txt: |
+      node_termination_event{node="{{ .NodeName }}"} 1
+EOF
+
+# install/upgrade helm chart
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--values values.yaml
+```
+</details>
 
 ## Simulate eviction
 

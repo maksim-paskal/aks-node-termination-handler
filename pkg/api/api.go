@@ -222,3 +222,64 @@ func AddNodeEvent(ctx context.Context, message *types.EventMessage) error {
 
 	return nil
 }
+
+func GetNodeLabels(ctx context.Context, nodeName string) (map[string]string, error) {
+	// this need for unit tests
+	if nodeName == "!!invalid!!GetNodeLabels" {
+		return nil, errors.New("invalid node name")
+	}
+
+	// this need for unit tests
+	if client.GetKubernetesClient() == nil {
+		return make(map[string]string), nil
+	}
+
+	node, err := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "error in nodes.get")
+	}
+
+	return node.Labels, nil
+}
+
+func GetNodePods(ctx context.Context, nodeName string) ([]string, error) {
+	// this need for unit tests
+	if nodeName == "!!invalid!!GetNodePods" {
+		return nil, errors.New("invalid node name")
+	}
+
+	// this need for unit tests
+	if client.GetKubernetesClient() == nil {
+		return []string{}, nil
+	}
+
+	pods, err := client.GetKubernetesClient().CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "error in pods.list")
+	}
+
+	result := make([]string, 0)
+
+	for _, pod := range pods.Items {
+		// ignore DaemonSet pods from pods list, because they are not affected by node termination
+		if getPodReferenceKind(pod) == "DaemonSet" {
+			continue
+		}
+
+		if pod.Spec.NodeName == nodeName {
+			result = append(result, pod.Name)
+		}
+	}
+
+	return result, nil
+}
+
+func getPodReferenceKind(pod corev1.Pod) string {
+	for _, ownerReference := range pod.OwnerReferences {
+		if len(ownerReference.Kind) > 0 {
+			return ownerReference.Kind
+		}
+	}
+
+	return ""
+}

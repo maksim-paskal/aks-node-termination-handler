@@ -14,28 +14,62 @@ package template
 
 import (
 	"bytes"
+	"context"
 	"html/template"
 
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/pkg/errors"
 )
 
 type MessageType struct {
-	Node     string
-	Event    types.ScheduledEventsEvent
-	Template string
-	NewLine  string // Used to making new line in templating results. Readonly.
+	Event        types.ScheduledEventsEvent
+	Template     string
+	NodeLabels   map[string]string `description:"Node labels"`
+	NodeName     string            `description:"Node name"`
+	ClusterName  string            `description:"Node label kubernetes.azure.com/cluster"`
+	InstanceType string            `description:"Node label node.kubernetes.io/instance-type"`
+	NodeArch     string            `description:"Node label kubernetes.io/arch"`
+	NodeOS       string            `description:"Node label kubernetes.io/os"`
+	NodeRole     string            `description:"Node label kubernetes.io/role"`
+	NodeRegion   string            `description:"Node label topology.kubernetes.io/region"`
+	NodeZone     string            `description:"Node label topology.kubernetes.io/zone"`
+	NodePods     []string          `description:"List of pods on node"`
 }
 
-func Message(obj MessageType) (string, error) {
+func NewMessageType(ctx context.Context, nodeName string, event types.ScheduledEventsEvent) (*MessageType, error) {
+	nodeLabels, err := api.GetNodeLabels(ctx, nodeName)
+	if err != nil {
+		return nil, errors.Wrap(err, "error in nodes.get")
+	}
+
+	nodePods, err := api.GetNodePods(ctx, nodeName)
+	if err != nil {
+		return nil, errors.Wrap(err, "error in getNodePods")
+	}
+
+	return &MessageType{
+		Event:        event,
+		NodeName:     nodeName,
+		NodeLabels:   nodeLabels,
+		ClusterName:  nodeLabels["kubernetes.azure.com/cluster"],
+		InstanceType: nodeLabels["node.kubernetes.io/instance-type"],
+		NodeArch:     nodeLabels["kubernetes.io/arch"],
+		NodeOS:       nodeLabels["kubernetes.io/os"],
+		NodeRole:     nodeLabels["kubernetes.io/role"],
+		NodeRegion:   nodeLabels["topology.kubernetes.io/region"],
+		NodeZone:     nodeLabels["topology.kubernetes.io/zone"],
+		NodePods:     nodePods,
+	}, nil
+}
+
+func Message(obj *MessageType) (string, error) {
 	tmpl, err := template.New("message").Parse(obj.Template)
 	if err != nil {
 		return "", errors.Wrap(err, "error in template.Parse")
 	}
 
 	var tpl bytes.Buffer
-
-	obj.NewLine = "\n"
 
 	err = tmpl.Execute(&tpl, obj)
 	if err != nil {

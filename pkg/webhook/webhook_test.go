@@ -62,9 +62,10 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 	t.Parallel()
 
 	type Test struct {
-		Name  string
-		Args  map[string]string
-		Error bool
+		Name     string
+		Args     map[string]string
+		Error    bool
+		NodeName string
 	}
 
 	tests := []Test{
@@ -72,14 +73,14 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			Name: "ValidHookAndTemplate",
 			Args: map[string]string{
 				"webhook.url":      getWebhookURL(),
-				"webhook.template": `node_termination_event{node="{{ .Node }}"} 1`,
+				"webhook.template": `node_termination_event{node="{{ .NodeName }}"} 1`,
 			},
 		},
 		{
 			Name: "EmptyURL",
 			Args: map[string]string{
 				"webhook.url":      "",
-				"webhook.template": `node_termination_event{node="{{ .Node }}"} 1`,
+				"webhook.template": `node_termination_event{node="{{ .NodeName }}"} 1`,
 			},
 		},
 		{
@@ -94,7 +95,7 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			Name: "InvalidContext",
 			Args: map[string]string{
 				"webhook.url":      "example.com",
-				"webhook.template": `{{ .Node }}`,
+				"webhook.template": `{{ .NodeName }}`,
 			},
 			Error: true,
 		},
@@ -102,7 +103,7 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			Name: "InvalidStatus",
 			Args: map[string]string{
 				"webhook.url":      ts.URL,
-				"webhook.template": `{{ .Node }}`,
+				"webhook.template": `{{ .NodeName }}`,
 			},
 			Error: true,
 		},
@@ -110,23 +111,63 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			Name: "InvalidMethod",
 			Args: map[string]string{
 				"webhook.url":      getWebhookURL(),
-				"webhook.template": `{{ .Node }}`,
+				"webhook.template": `{{ .NodeName }}`,
 				"webhook.method":   `???`,
 			},
 			Error: true,
 		},
+		{
+			Name: "WebhookTemplateFile",
+			Args: map[string]string{
+				"webhook.url":           getWebhookURL(),
+				"webhook.template-file": "testdata/WebhookTemplateFile.txt",
+			},
+		},
+		{
+			Error: true,
+			Name:  "WebhookTemplateFileInvalid",
+			Args: map[string]string{
+				"webhook.url":           getWebhookURL(),
+				"webhook.template-file": "faketestdata/WebhookTemplateFile.txt",
+			},
+		},
+		{
+			Error: true,
+			Name:  "InvalidNodeName",
+			Args: map[string]string{
+				"webhook.url": getWebhookURL(),
+			},
+			NodeName: "!!invalid!!GetNodeLabels",
+		},
+	}
+
+	// clear flags
+	cleanAllFlags := func() {
+		for _, test := range tests {
+			for key := range test.Args {
+				_ = flag.Set(key, "")
+			}
+		}
 	}
 
 	for _, test := range tests { //nolint:paralleltest
 		tc := test
 		t.Run(test.Name, func(t *testing.T) {
+			cleanAllFlags()
+
 			for key, value := range tc.Args {
 				_ = flag.Set(key, value)
 			}
 
-			err := webhook.SendWebHook(context.Background(), template.MessageType{
-				Node: "test",
-			})
+			messageType := &template.MessageType{
+				NodeName: "test",
+			}
+
+			if len(tc.NodeName) > 0 {
+				messageType.NodeName = tc.NodeName
+			}
+
+			err := webhook.SendWebHook(context.TODO(), messageType)
 			if tc.Error {
 				require.Error(t, err)
 			} else {

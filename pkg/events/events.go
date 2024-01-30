@@ -27,6 +27,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/utils"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -68,7 +69,7 @@ func ReadEvents(ctx context.Context, azureResource string) {
 	}
 }
 
-func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //nolint:cyclop,funlen
+func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //nolint:cyclop,funlen,gocognit
 	reqCtx, cancel := context.WithTimeout(ctx, *config.Get().RequestTimeout)
 	defer cancel()
 
@@ -136,14 +137,12 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 					continue
 				}
 
-				err := alert.SendALL(ctx, template.MessageType{
-					Event:    event,
-					Node:     azureResource,
-					Template: *config.Get().AlertMessage,
-				})
-				if err != nil {
-					log.WithError(err).Error("error in alerts.Send")
-				}
+				// send event in separate goroutine
+				go func() {
+					if err := sendEvent(ctx, event); err != nil {
+						log.WithError(err).Error("error in sendEvent")
+					}
+				}()
 
 				err = api.DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId)
 				if err != nil {
@@ -163,4 +162,25 @@ func getsharedMetricsLabels(resourceName string) []string {
 		*config.Get().NodeName,
 		resourceName,
 	}
+}
+
+func sendEvent(ctx context.Context, event types.ScheduledEventsEvent) error {
+	message, err := template.NewMessageType(ctx, *config.Get().NodeName, event)
+	if err != nil {
+		return errors.Wrap(err, "error in template.NewMessageType")
+	}
+
+	log.Infof("Message: %+v", message)
+
+	message.Template = *config.Get().AlertMessage
+
+	if err := alert.SendTelegram(message); err != nil {
+		log.WithError(err).Error("error in alert.SendTelegram")
+	}
+
+	if err := webhook.SendWebHook(ctx, message); err != nil {
+		log.WithError(err).Error("error in webhook.SendWebHook")
+	}
+
+	return nil
 }

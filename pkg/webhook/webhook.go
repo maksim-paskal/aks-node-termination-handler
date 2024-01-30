@@ -17,6 +17,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
@@ -30,7 +31,7 @@ var client = &http.Client{
 
 var errHTTPNotOK = errors.New("http result not OK")
 
-func SendWebHook(ctx context.Context, obj template.MessageType) error {
+func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	ctx, cancel := context.WithTimeout(ctx, *config.Get().WebHookTimeout)
 	defer cancel()
 
@@ -38,11 +39,23 @@ func SendWebHook(ctx context.Context, obj template.MessageType) error {
 		return nil
 	}
 
-	webhookBody, err := template.Message(template.MessageType{
-		Node:     obj.Node,
-		Event:    obj.Event,
-		Template: *config.Get().WebHookTemplate,
-	})
+	message, err := template.NewMessageType(ctx, obj.NodeName, obj.Event)
+	if err != nil {
+		return errors.Wrap(err, "error in template.NewMessageType")
+	}
+
+	message.Template = *config.Get().WebHookTemplate
+
+	if len(*config.Get().WebHookTemplateFile) > 0 {
+		templateFile, err := os.ReadFile(*config.Get().WebHookTemplateFile)
+		if err != nil {
+			return errors.Wrap(err, "error in os.ReadFile")
+		}
+
+		message.Template = string(templateFile)
+	}
+
+	webhookBody, err := template.Message(message)
 	if err != nil {
 		return errors.Wrap(err, "error in template.Message")
 	}

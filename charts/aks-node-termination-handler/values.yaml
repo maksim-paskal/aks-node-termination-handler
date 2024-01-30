@@ -8,8 +8,37 @@ priorityClassName: ""
 annotations: {}
 labels: {}
 
+configMap:
+  create: true
+  name: aks-node-termination-handler-files
+  mountPath: /files
+  data: {}
+    # slack-payload.json: |
+    #   {
+    #     "channel": "#mychannel",
+    #     "username": "webhookbot",
+    #     "text": "This is message for {{ .NodeName }}, {{ .InstanceType }} from {{ .NodeRegion }}",
+    #     "icon_emoji": ":ghost:"
+    #   }
+    # prometheus-pushgateway-payload.txt: |
+    #   node_termination_event{node="{{ .NodeName }}"} 1
+
+extraVolumes: []
+extraVolumeMounts: []
+
 metrics:
   addAnnotations: true
+
+securityContext:
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  windowsOptions:
+    runAsUserName: "ContainerUser"
 
 tolerations:
 - key: "kubernetes.azure.com/scalesetpriority"
@@ -24,7 +53,6 @@ nodeSelector: {}
 
 resources:
   limits:
-    cpu: 20m
     memory: 100Mi
   requests:
     cpu: 20m

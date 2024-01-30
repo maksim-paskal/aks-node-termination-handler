@@ -1,0 +1,62 @@
+{
+  "Event": {
+    "EventId": "602d9444-d2cd-49c7-8624-8643e7171297",
+    "EventType": "Reboot",
+    "ResourceType": "VirtualMachine",
+    "Resources": [
+      "FrontEnd_IN_0",
+      "aks-spotcpu2d2as-24469130-vmss_1",
+      "aks-spotcpu4m16n-41289323-vmss_862"
+    ],
+    "EventStatus": "Scheduled",
+    "NotBefore": "Mon, 19 Sep 2016 18:29:47 GMT",
+    "Description": "Host server is undergoing maintenance",
+    "EventSource": "Platform",
+    "DurationInSeconds": -1
+  },
+  "Template": "",
+  "NodeLabels": {
+    "agentpool": "spotcpu4m16n",
+    "beta.kubernetes.io/arch": "amd64",
+    "beta.kubernetes.io/instance-type": "Standard_D4as_v5",
+    "beta.kubernetes.io/os": "linux",
+    "failure-domain.beta.kubernetes.io/region": "eastus",
+    "failure-domain.beta.kubernetes.io/zone": "0",
+    "kubernetes.azure.com/agentpool": "spotcpu4m16n",
+    "kubernetes.azure.com/cluster": "MC_EAST-US-RC-STAGE_stage-cluster_eastus",
+    "kubernetes.azure.com/consolidated-additional-properties": "d9a49827-aede-11ee-832c-fe2d222ef432",
+    "kubernetes.azure.com/kubelet-identity-client-id": "6781a919-9379-417c-8aff-257ecacd1139",
+    "kubernetes.azure.com/mode": "user",
+    "kubernetes.azure.com/network-policy": "none",
+    "kubernetes.azure.com/node-image-version": "AKSUbuntu-2204gen2containerd-202312.06.0",
+    "kubernetes.azure.com/nodepool-type": "VirtualMachineScaleSets",
+    "kubernetes.azure.com/os-sku": "Ubuntu",
+    "kubernetes.azure.com/role": "agent",
+    "kubernetes.azure.com/scalesetpriority": "spot",
+    "kubernetes.azure.com/storageprofile": "managed",
+    "kubernetes.azure.com/storagetier": "Premium_LRS",
+    "kubernetes.io/arch": "amd64",
+    "kubernetes.io/hostname": "aks-spotcpu4m16n-41289323-vmss0000ny",
+    "kubernetes.io/os": "linux",
+    "kubernetes.io/role": "agent",
+    "node-role.kubernetes.io/agent": "",
+    "node.kubernetes.io/instance-type": "Standard_D4as_v5",
+    "storageprofile": "managed",
+    "storagetier": "Premium_LRS",
+    "topology.disk.csi.azure.com/zone": "",
+    "topology.kubernetes.io/region": "eastus",
+    "topology.kubernetes.io/zone": "0"
+  },
+  "NodeName": "aks-spotcpu4m16n-41289323-vmss0000ny",
+  "ClusterName": "MC_EAST-US-RC-STAGE_stage-cluster_eastus",
+  "InstanceType": "Standard_D4as_v5",
+  "NodeArch": "amd64",
+  "NodeOS": "linux",
+  "NodeRole": "agent",
+  "NodeRegion": "eastus",
+  "NodeZone": "0",
+  "NodePods": [
+    "pod1",
+    "pod2"
+  ]
+}

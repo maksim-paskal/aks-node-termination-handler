@@ -49,7 +49,7 @@ run:
 	-gracePeriodSeconds=0 \
 	-endpoint=http://localhost:28080/pkg/types/testdata/ScheduledEventsType.json \
 	-webhook.url=http://localhost:9091/metrics/job/aks-node-termination-handler \
-	-webhook.template='node_termination_event{node="{{ .Node }}"} 1' \
+	-webhook.template='node_termination_event{node="{{ .NodeName }}"} 1' \
 	-telegram.token=${telegramToken} \
 	-telegram.chatID=${telegramChatID} \
 	-web.address=127.0.0.1:17923
