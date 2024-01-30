@@ -25,7 +25,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 )
 
-var ctx = context.Background()
+var ctx = context.TODO()
 
 func TestDrain(t *testing.T) {
 	t.Parallel()
@@ -46,7 +46,7 @@ func TestDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := alert.SendTelegram(template.MessageType{Template: "e2e"}); err != nil {
+	if err := alert.SendTelegram(&template.MessageType{Template: "e2e"}); err != nil {
 		t.Fatal(err)
 	}
 

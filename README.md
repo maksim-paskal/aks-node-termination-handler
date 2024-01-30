@@ -72,9 +72,12 @@ aks-node-termination-handler/aks-node-termination-handler \
 --set priorityClassName=system-node-critical
 ```
 
-## Alerting
+## Send notification events
 
-To make alerts to Telegram or Slack or Webhook
+You can compose your payload with markers that described [here](pkg/template/README.md)
+
+<details>
+  <summary>Send Telegram notification</summary>
 
 ```bash
 helm upgrade aks-node-termination-handler \
@@ -82,11 +85,74 @@ helm upgrade aks-node-termination-handler \
 --namespace kube-system \
 aks-node-termination-handler/aks-node-termination-handler \
 --set priorityClassName=system-node-critical \
---set args[0]=-telegram.token=<telegram token> \
---set args[1]=-telegram.chatID=<telegram chatid> \
---set args[2]=-webhook.url=http://prometheus-pushgateway.prometheus.svc.cluster.local:9091/metrics/job/aks-node-termination-handler \
---set args[3]=-webhook.template='node_termination_event{node="{{ .Node }}"} 1'
+--set 'args[0]=-telegram.token=<telegram token>' \
+--set 'args[1]=-telegram.chatID=<telegram chatid>'
 ```
+</details>
+
+<details>
+  <summary>Send Slack notification</summary>
+
+```bash
+# create payload file
+cat <<EOF | tee values.yaml
+priorityClassName: system-node-critical
+
+args:
+- -webhook.url=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+- -webhook.template-file=/files/slack-payload.json
+- -webhook.contentType=application/json
+- -webhook.method=POST
+- -webhook.timeout=30s
+
+configMap:
+  data:
+    slack-payload.json: |
+      {
+        "channel": "#mychannel",
+        "username": "webhookbot",
+        "text": "This is message for {{ .NodeName }}, {{ .InstanceType }} from {{ .NodeRegion }}",
+        "icon_emoji": ":ghost:"
+      }
+EOF
+
+# install/upgrade helm chart
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--values values.yaml
+```
+</details>
+
+<details>
+  <summary>Send Prometheus Pushgateway event</summary>
+
+```bash
+cat <<EOF | tee values.yaml
+priorityClassName: system-node-critical
+
+args:
+- -webhook.url=http://prometheus-pushgateway.prometheus.svc.cluster.local:9091/metrics/job/aks-node-termination-handler
+- -webhook.template-file=/files/prometheus-pushgateway-payload.txt
+- -webhook.contentType=text/plain
+- -webhook.method=POST
+- -webhook.timeout=30s
+
+configMap:
+  data:
+    prometheus-pushgateway-payload.txt: |
+      node_termination_event{node="{{ .NodeName }}"} 1
+EOF
+
+# install/upgrade helm chart
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--values values.yaml
+```
+</details>
 
 ## Simulate eviction
 

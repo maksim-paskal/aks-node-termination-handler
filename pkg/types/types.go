@@ -32,15 +32,15 @@ const (
 
 // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events
 type ScheduledEventsEvent struct {
-	EventId           string //nolint:golint,revive,stylecheck
-	EventType         ScheduledEventsEventType
-	ResourceType      string
-	Resources         []string
-	EventStatus       string
-	NotBefore         string // Mon, 19 Sep 2016 18:29:47 GMT
-	Description       string
-	EventSource       string
-	DurationInSeconds int
+	EventId           string                   `description:"Globally unique identifier for this event."` //nolint:golint,revive,stylecheck,lll
+	EventType         ScheduledEventsEventType `description:"Impact this event causes."`
+	ResourceType      string                   `description:"Type of resource this event affects."`
+	Resources         []string                 `description:"List of resources this event affects."`
+	EventStatus       string                   `description:"Status of this event."`
+	NotBefore         string                   `description:"Time after which this event can start. The event is guaranteed to not start before this time. Will be blank if the event has already started"` //nolint:lll
+	Description       string                   `description:"Description of this event."`
+	EventSource       string                   `description:"Initiator of the event."`
+	DurationInSeconds int                      `description:"The expected duration of the interruption caused by the event."` //nolint:lll
 }
 
 // api-version=2020-07-01.
