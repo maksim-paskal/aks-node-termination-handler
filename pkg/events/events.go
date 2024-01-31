@@ -95,7 +95,8 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 	}
 
 	if len(body) == 0 {
-		log.Info("Events response is empty")
+		log.Warn("Events response is empty")
+
 		return false, nil
 	}
 
