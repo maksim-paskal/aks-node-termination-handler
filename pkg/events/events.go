@@ -94,6 +94,12 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 		return false, errors.Wrap(err, "error in io.ReadAll")
 	}
 
+	if len(body) == 0 {
+		log.Warn("Events response is empty")
+
+		return false, nil
+	}
+
 	message := types.ScheduledEventsType{}
 
 	err = json.Unmarshal(body, &message)
