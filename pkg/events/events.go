@@ -82,6 +82,12 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 	req.Header.Add("Metadata", "true")
 
+	log.WithFields(log.Fields{
+		"method":  req.Method,
+		"url":     req.URL,
+		"headers": req.Header,
+	}).Debug("Doing request")
+
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return false, errors.Wrap(err, "error in client.Do(req)")
@@ -89,10 +95,14 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 	defer resp.Body.Close()
 
+	log.Debugf("response status: %s", resp.Status)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return false, errors.Wrap(err, "error in io.ReadAll")
 	}
+
+	log.Debugf("response body: %s", string(body))
 
 	if len(body) == 0 {
 		log.Warn("Events response is empty")

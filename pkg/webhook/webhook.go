@@ -23,6 +23,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var client = &http.Client{
@@ -69,11 +70,19 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 
 	req.Header.Set("Content-Type", *config.Get().WebHookContentType)
 
+	log.WithFields(log.Fields{
+		"method":  req.Method,
+		"url":     req.URL,
+		"headers": req.Header,
+	}).Infof("Doing request with body: %s", requestBody.String())
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "error in client.Do")
 	}
 	defer resp.Body.Close()
+
+	log.Infof("response status: %s", resp.Status)
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
