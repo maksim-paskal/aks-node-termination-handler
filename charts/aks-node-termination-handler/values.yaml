@@ -10,7 +10,7 @@ labels: {}
 
 configMap:
   create: true
-  name: aks-node-termination-handler-files
+  name: "{{ .Release.Name }}-files"
   mountPath: /files
   data: {}
     # slack-payload.json: |
@@ -39,6 +39,8 @@ securityContext:
     - ALL
   windowsOptions:
     runAsUserName: "ContainerUser"
+
+affinity: {}
 
 tolerations:
 - key: "kubernetes.azure.com/scalesetpriority"
