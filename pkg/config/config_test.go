@@ -149,6 +149,7 @@ func TestConfig(t *testing.T) {
 			}
 			config.Set(newConfig)
 			err := config.Check()
+
 			if tc.err {
 				require.Error(t, err)
 			} else {

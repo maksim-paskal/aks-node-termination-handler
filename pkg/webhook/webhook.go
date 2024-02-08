@@ -61,7 +61,7 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 		return errors.Wrap(err, "error in template.Message")
 	}
 
-	requestBody := bytes.NewBufferString(fmt.Sprintf("%s\n", webhookBody))
+	requestBody := bytes.NewBufferString(webhookBody + "\n")
 
 	req, err := http.NewRequestWithContext(ctx, *config.Get().WebHookMethod, *config.Get().WebHookURL, requestBody)
 	if err != nil {

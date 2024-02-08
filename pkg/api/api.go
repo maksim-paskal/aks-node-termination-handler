@@ -133,7 +133,9 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 
 			return false, nodeErr
 		}
+
 		err = updateNodeWith(ctx, taintKey, taintValue, freshNode)
+
 		switch {
 		case err == nil:
 			return true, nil
@@ -205,6 +207,7 @@ func AddNodeEvent(ctx context.Context, message *types.EventMessage) error {
 
 	err = wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
 		_, err = client.GetKubernetesClient().CoreV1().Events("default").Create(ctx, &event, metav1.CreateOptions{})
+
 		switch {
 		case err == nil:
 			return true, nil
