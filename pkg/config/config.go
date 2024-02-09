@@ -32,7 +32,7 @@ const (
 	defaultPodGracePeriodSeconds  = -1
 	defaultNodeGracePeriodSeconds = 120
 	defaultGracePeriodSecond      = 10
-	defaultRequestTimeout         = 1 * time.Second
+	defaultRequestTimeout         = 5 * time.Second
 	defaultWebHookTimeout         = 30 * time.Second
 )
 
