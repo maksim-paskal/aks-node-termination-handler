@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.configMap.name }}
+  name: {{ tpl .Values.configMap.name . }}
 data:
 {{ toYaml .Values.configMap.data | indent 2 }}
 {{ end }}

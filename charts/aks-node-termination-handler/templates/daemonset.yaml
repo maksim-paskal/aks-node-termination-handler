@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: aks-node-termination-handler
+  name: {{ .Release.Name }}
   labels:
-    app: aks-node-termination-handler
+    app: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:
-      app: aks-node-termination-handler
+      app: {{ .Release.Name }}
   template:
     metadata:
       annotations:
@@ -19,12 +19,12 @@ spec:
 {{ toYaml .Values.annotations | indent 8 }}
 {{ end }}
       labels:
-        app: aks-node-termination-handler
+        app: {{ .Release.Name }}
 {{ if .Values.labels }}
 {{ toYaml .Values.labels | indent 8 }}
 {{ end }}
     spec:
-      serviceAccount: aks-node-termination-handler
+      serviceAccount: {{ .Release.Name }}
       {{ if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName | quote }}
       {{ end }}
@@ -36,10 +36,14 @@ spec:
       nodeSelector:
 {{- toYaml .Values.nodeSelector | nindent 8 }}
 {{- end }}
+{{- if .Values.affinity }}
+      affinity:
+{{- toYaml .Values.affinity | nindent 8 }}
+{{- end }}
       volumes:
       - name: files
         configMap:
-          name: {{ .Values.configMap.name }}
+          name: {{ tpl .Values.configMap.name . }}
       {{ if .Values.extraVolumes }}
       {{ toYaml .Values.extraVolumes | indent 6 }}
       {{ end }}
