@@ -29,6 +29,8 @@ extraVolumeMounts: []
 metrics:
   addAnnotations: true
 
+hostNetwork: false
+
 securityContext:
   runAsNonRoot: true
   privileged: false
@@ -39,6 +41,8 @@ securityContext:
     - ALL
   windowsOptions:
     runAsUserName: "ContainerUser"
+  seccompProfile:
+    type: RuntimeDefault
 
 affinity: {}
 

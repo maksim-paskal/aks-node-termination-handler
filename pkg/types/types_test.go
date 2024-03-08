@@ -15,6 +15,8 @@ package types_test
 import (
 	"encoding/json"
 	"os"
+	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
@@ -41,5 +43,68 @@ func TestScheduledEventsType(t *testing.T) {
 
 	if want := "VirtualMachine"; message.Events[0].ResourceType != want {
 		t.Fatalf("want=%s, got=%s", want, message.Events[0].ResourceType)
+	}
+}
+
+func TestAzureResource(t *testing.T) {
+	t.Parallel()
+
+	type azureResourceTest struct {
+		providerID string
+		want       *types.AzureResource
+	}
+
+	tests := make([]azureResourceTest, 0)
+
+	tests = append(tests, azureResourceTest{
+		providerID: "azure:///subscriptions/12345a05-1234-1234-12345-922b47912341/resourceGroups/mc_prod_prod_eastus/providers/Microsoft.Compute/virtualMachineScaleSets/aks-spotcpu2v2-19654750-vmss/virtualMachines/2768", //nolint:lll
+		want: &types.AzureResource{
+			EventResourceName: "aks-spotcpu2v2-19654750-vmss_2768",
+			SubscriptionID:    "12345a05-1234-1234-12345-922b47912341",
+			ResourceGroup:     "mc_prod_prod_eastus",
+		},
+	})
+
+	tests = append(tests, azureResourceTest{
+		providerID: "azure:///subscriptions/12345a05-1234-1234-12345-922b47912342/resourceGroups/aro-infra-lth8qmzr-test-openshift-cluster1/providers/Microsoft.Compute/virtualMachines/test-openshift-cluste-t98dd-master-0", //nolint:lll
+		want: &types.AzureResource{
+			EventResourceName: "test-openshift-cluste-t98dd-master-0",
+			SubscriptionID:    "12345a05-1234-1234-12345-922b47912342",
+			ResourceGroup:     "aro-infra-lth8qmzr-test-openshift-cluster1",
+		},
+	})
+
+	tests = append(tests, azureResourceTest{
+		providerID: "azure:///subscriptions/12345a05-1234-1234-12345-922b47912343/resourceGroups/aro-infra-lth8qmzr-test-openshift-cluster2/providers/Microsoft.Compute/virtualMachines/test-openshift-cluste-t98dd-worker-eastus1-rz2t8", //nolint:lll
+		want: &types.AzureResource{
+			EventResourceName: "test-openshift-cluste-t98dd-worker-eastus1-rz2t8",
+			SubscriptionID:    "12345a05-1234-1234-12345-922b47912343",
+			ResourceGroup:     "aro-infra-lth8qmzr-test-openshift-cluster2",
+		},
+	})
+
+	for testID, test := range tests {
+		test := test
+
+		t.Run("Test"+strconv.Itoa(testID), func(t *testing.T) {
+			t.Parallel()
+
+			azureResource, err := types.NewAzureResource(test.providerID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// need to set providerID for comparison
+			test.want.ProviderID = test.providerID
+
+			if !reflect.DeepEqual(azureResource, test.want) {
+				t.Fatalf("want=%+v, got=%+v", test.want, azureResource)
+			}
+		})
+	}
+
+	// test invalid providerID
+	if _, err := types.NewAzureResource("azure://fake"); err == nil {
+		t.Fatal("error expected")
 	}
 }

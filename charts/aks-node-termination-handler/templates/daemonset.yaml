@@ -24,6 +24,7 @@ spec:
 {{ toYaml .Values.labels | indent 8 }}
 {{ end }}
     spec:
+      hostNetwork: {{ .Values.hostNetwork }}
       serviceAccount: {{ .Release.Name }}
       {{ if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName | quote }}

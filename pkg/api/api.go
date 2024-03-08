@@ -15,7 +15,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
@@ -33,12 +32,7 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 )
 
-const (
-	AzureProviderID = "^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$" //nolint:lll
-	taintKeyPrefix  = "aks-node-termination-handler"
-)
-
-var errAzureProviderIDNotValid = errors.New("azureProviderID not valid")
+const taintKeyPrefix = "aks-node-termination-handler"
 
 func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) {
 	node, err := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
@@ -46,16 +40,12 @@ func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) 
 		return "", errors.Wrap(err, "error in Clientset.CoreV1().Nodes().Get")
 	}
 
-	regexpObj := regexp.MustCompile(AzureProviderID)
-
-	if !regexpObj.MatchString(node.Spec.ProviderID) {
-		return "", errors.Wrap(errAzureProviderIDNotValid, node.Spec.ProviderID)
+	azureResourceName, err := types.NewAzureResource(node.Spec.ProviderID)
+	if err != nil {
+		return "", errors.Wrap(err, "error in types.NewAzureResource")
 	}
 
-	v := regexpObj.FindAllStringSubmatch(node.Spec.ProviderID, 1)
-	result := fmt.Sprintf("%s_%s", v[0][3], v[0][4])
-
-	return result, nil
+	return azureResourceName.EventResourceName, nil
 }
 
 func DrainNode(ctx context.Context, nodeName string, eventType string, eventID string) error { //nolint:cyclop
