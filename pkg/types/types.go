@@ -12,6 +12,13 @@ limitations under the License.
 */
 package types
 
+import (
+	"fmt"
+	"regexp"
+
+	"github.com/pkg/errors"
+)
+
 type ScheduledEventsEventType string
 
 const (
@@ -41,6 +48,45 @@ type ScheduledEventsEvent struct {
 	Description       string                   `description:"Description of this event."`
 	EventSource       string                   `description:"Initiator of the event."`
 	DurationInSeconds int                      `description:"The expected duration of the interruption caused by the event."` //nolint:lll
+}
+
+var (
+	virtualMachineScaleSetsRe = regexp.MustCompile("^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachineScaleSets/(.+)/virtualMachines/(.+)$") //nolint:lll
+	virtualMachineRe          = regexp.MustCompile("^azure:///subscriptions/(.+)/resourceGroups/(.+)/providers/Microsoft.Compute/virtualMachines/(.+)$")                              //nolint:lll
+)
+
+type AzureResource struct {
+	ProviderID        string
+	EventResourceName string
+	SubscriptionID    string
+	ResourceGroup     string
+}
+
+func NewAzureResource(providerID string) (*AzureResource, error) {
+	resource := &AzureResource{
+		ProviderID: providerID,
+	}
+
+	switch {
+	case virtualMachineScaleSetsRe.MatchString(providerID):
+		v := virtualMachineScaleSetsRe.FindAllStringSubmatch(providerID, 1)
+
+		resource.SubscriptionID = v[0][1]
+		resource.ResourceGroup = v[0][2]
+		resource.EventResourceName = fmt.Sprintf("%s_%s", v[0][3], v[0][4])
+
+	case virtualMachineRe.MatchString(providerID):
+		v := virtualMachineRe.FindAllStringSubmatch(providerID, 1)
+
+		resource.SubscriptionID = v[0][1]
+		resource.ResourceGroup = v[0][2]
+		resource.EventResourceName = v[0][3]
+
+	default:
+		return nil, errors.Errorf("providerID not recognized: %s", providerID)
+	}
+
+	return resource, nil
 }
 
 // api-version=2020-07-01.

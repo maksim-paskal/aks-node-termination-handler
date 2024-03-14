@@ -265,3 +265,18 @@ helm upgrade aks-node-termination-handler-windows-2019 \
 aks-node-termination-handler/aks-node-termination-handler \
 --values=linux-windows2019.values.yaml
 ```
+
+## Red Hat OpenShift support
+
+For OpenShift clusters that use Azure computes for their nodes, you must enable pod hostNetwork support because OpenShift networking has a [restriction](https://docs.openshift.com/container-platform/4.15/networking/understanding-networking.html) for using Azure Metadata Service.
+
+This support can be enabled with `--set hostNetwork=true`
+
+```bash
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--set priorityClassName=system-node-critical \
+--set hostNetwork=true
+```
