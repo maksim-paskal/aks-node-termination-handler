@@ -23,7 +23,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21'
+        go-version: '1.22'
     - name: Remove Git Tags with Charts
       run: git tag -d $(git tag -l "helm-chart-*")
     - name: Run GoReleaser
