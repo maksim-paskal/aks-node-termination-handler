@@ -100,7 +100,7 @@ func printType(prefix string, message interface{}) {
 	v := reflect.ValueOf(message)
 	typeOfS := v.Type()
 
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		switch typeOfS.Field(i).Name {
 		case "Template":
 		case "Event":

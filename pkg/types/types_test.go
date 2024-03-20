@@ -84,8 +84,6 @@ func TestAzureResource(t *testing.T) {
 	})
 
 	for testID, test := range tests {
-		test := test
-
 		t.Run("Test"+strconv.Itoa(testID), func(t *testing.T) {
 			t.Parallel()
 
