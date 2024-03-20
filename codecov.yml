@@ -1,0 +1,10 @@
+ignore:
+# ignore cmd/main.go because it's a main file
+- "cmd/main.go"
+# ignore because to test need active connection to the Telegram
+- "pkg/alert/alert.go"
+# ignore because to test need active connection to the kubernetes cluster
+- "pkg/web/web.go"
+- "pkg/api/api.go"
+- "pkg/events/events.go"
+- "pkg/client/client.go"

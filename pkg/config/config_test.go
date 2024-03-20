@@ -139,18 +139,17 @@ func TestConfig(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(testCase.testName, func(t *testing.T) {
+	for i := range testCases {
+		t.Run(testCases[i].testName, func(t *testing.T) {
 			newConfig := config.Type{
-				TaintEffect:    &tc.taintEffect,
-				NodeName:       &tc.nodeName,
-				TelegramChatID: &tc.telegramID,
+				TaintEffect:    &testCases[i].taintEffect,
+				NodeName:       &testCases[i].nodeName,
+				TelegramChatID: &testCases[i].telegramID,
 			}
 			config.Set(newConfig)
 			err := config.Check()
 
-			if tc.err {
+			if testCases[i].err {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)

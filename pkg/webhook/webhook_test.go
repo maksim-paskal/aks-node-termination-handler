@@ -150,9 +150,8 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 		}
 	}
 
-	for _, test := range tests { //nolint:paralleltest
-		tc := test
-		t.Run(test.Name, func(t *testing.T) {
+	for _, tc := range tests { //nolint:paralleltest
+		t.Run(tc.Name, func(t *testing.T) {
 			cleanAllFlags()
 
 			for key, value := range tc.Args {
