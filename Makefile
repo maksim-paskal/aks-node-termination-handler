@@ -69,11 +69,6 @@ test:
 e2e:
 	go test -v -race ./e2e \
 	-kubeconfig=$(KUBECONFIG) \
-	-log.level=INFO \
-	-log.pretty \
-	-taint.node \
-	-taint.effect=NoExecute \
-	-podGracePeriodSeconds=30 \
 	-node=${node} \
 	-telegram.token=${telegramToken} \
 	-telegram.chatID=${telegramChatID}

@@ -35,6 +35,11 @@ import (
 const taintKeyPrefix = "aks-node-termination-handler"
 
 func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) {
+	// return user defined resource name
+	if len(*config.Get().ResourceName) > 0 {
+		return *config.Get().ResourceName, nil
+	}
+
 	node, err := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrap(err, "error in Clientset.CoreV1().Nodes().Get")
@@ -112,6 +117,8 @@ func getTaintKey(eventType string) string {
 }
 
 func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValue string) error {
+	log.Infof("Adding taint %s=%s on node %s", taintKey, taintValue, node.Name)
+
 	freshNode := node.DeepCopy()
 
 	var err error
@@ -167,7 +174,17 @@ func GetNode(ctx context.Context, nodeName string) (*corev1.Node, error) {
 	return node, nil
 }
 
-func AddNodeEvent(ctx context.Context, message *types.EventMessage) error {
+func AddNodeEvent(ctx context.Context, eventType, eventReason, eventMessage string) error {
+	message := &types.EventMessage{
+		Type:    eventType,
+		Reason:  eventReason,
+		Message: eventMessage,
+	}
+
+	return AddNodeEventMessage(ctx, message)
+}
+
+func AddNodeEventMessage(ctx context.Context, message *types.EventMessage) error {
 	node, err := GetNode(ctx, *config.Get().NodeName)
 	if err != nil {
 		return errors.Wrap(err, "error in GetNode")

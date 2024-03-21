@@ -36,6 +36,11 @@ const (
 	defaultWebHookTimeout         = 30 * time.Second
 )
 
+const (
+	EventMessageReceived     = "Azure API sended schedule event for this node"
+	EventMessageBeforeListen = "Start to listen events from Azure API"
+)
+
 var (
 	errNoNode             = errors.New("no node name is defined, run with -node=test")
 	errChatIDMustBeInt    = errors.New("TelegramChatID must be integer")
@@ -69,6 +74,8 @@ type Type struct {
 	NodeGracePeriodSeconds *int
 	GracePeriodSeconds     *int
 	DrainOnFreezeEvent     *bool
+	ResourceName           *string
+	ExitAfterNodeDrain     *bool
 }
 
 var config = Type{
@@ -97,6 +104,8 @@ var config = Type{
 	NodeGracePeriodSeconds: flag.Int("nodeGracePeriodSeconds", defaultNodeGracePeriodSeconds, "maximum time in seconds to drain the node"),  //nolint:lll
 	GracePeriodSeconds:     flag.Int("gracePeriodSeconds", defaultGracePeriodSecond, "grace period is seconds for application termination"), //nolint:lll
 	DrainOnFreezeEvent:     flag.Bool("drainOnFreezeEvent", false, "drain node on freeze event"),
+	ResourceName:           flag.String("resource.name", "", "Azure resource name to drain"),
+	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),
 }
 
 func (t *Type) GracePeriod() time.Duration {

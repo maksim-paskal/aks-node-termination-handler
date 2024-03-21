@@ -19,41 +19,66 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/cache"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/utils"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-const eventCacheTTL = 10 * time.Minute
+const (
+	requestTimeout = 10 * time.Second
+	readInterval   = 5 * time.Second
+	eventCacheTTL  = 10 * time.Minute
+)
 
 var httpClient = &http.Client{
 	Transport: metrics.NewInstrumenter("events", false).InstrumentedRoundTripper(),
 }
 
-func ReadEvents(ctx context.Context, azureResource string) {
-	log.Infof("Watching for resource in events %s", azureResource)
+type Reader struct {
+	// method of making request
+	Method string
+	// endpoint to read events
+	Endpoint string
+	// timeout of making request
+	RequestTimeout time.Duration
+	// intervals of reading events
+	Period time.Duration
+	// name of the node
+	NodeName string
+	// name of the resource to watch
+	AzureResource string
+	// BeforeReading is a function that will be called before reading events
+	BeforeReading func(ctx context.Context) error `json:"-"`
+	// EventReceived is a function that will be called when event received
+	// return true if you want to stop reading events
+	EventReceived func(ctx context.Context, event types.ScheduledEventsEvent) (bool, error) `json:"-"`
+}
 
-	nodeEvent := types.EventMessage{
-		Type:    "Info",
-		Reason:  "ReadEvents",
-		Message: "Start to listen events from Azure API",
+func NewReader() *Reader {
+	return &Reader{
+		Method:         http.MethodGet,
+		Endpoint:       "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01",
+		RequestTimeout: requestTimeout,
+		Period:         readInterval,
 	}
-	if err := api.AddNodeEvent(ctx, &nodeEvent); err != nil {
-		log.WithError(err).Error()
+}
+
+func (r *Reader) ReadEvents(ctx context.Context) {
+	log.Infof("Start reading events %s", r.String())
+
+	if r.BeforeReading != nil {
+		if err := r.BeforeReading(ctx); err != nil {
+			log.WithError(err).Error("Error in BeforeReading")
+		}
 	}
 
 	for ctx.Err() == nil {
-		stopReadingEvents, err := readEndpoint(ctx, azureResource)
+		stopReadingEvents, err := r.ReadEndpoint(ctx)
 		if err != nil {
-			metrics.ErrorReadingEndpoint.WithLabelValues(getsharedMetricsLabels(azureResource)...).Inc()
+			metrics.ErrorReadingEndpoint.WithLabelValues(r.getMetricsLabels()...).Inc()
 
 			log.WithError(err).Error()
 		}
@@ -64,20 +89,17 @@ func ReadEvents(ctx context.Context, azureResource string) {
 			return
 		}
 
-		log.Debugf("Sleep %s", *config.Get().Period)
-		utils.SleepWithContext(ctx, *config.Get().Period)
+		utils.SleepWithContext(ctx, r.Period)
 	}
 }
 
-func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //nolint:cyclop,funlen,gocognit
-	reqCtx, cancel := context.WithTimeout(ctx, *config.Get().RequestTimeout)
+func (r *Reader) getScheduledEvents(ctx context.Context) (*types.ScheduledEventsType, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.RequestTimeout)
 	defer cancel()
 
-	log.Debugf("read %s", *config.Get().Endpoint)
-
-	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, *config.Get().Endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, r.Method, r.Endpoint, nil)
 	if err != nil {
-		return false, errors.Wrap(err, "error in http.NewRequestWithContext")
+		return nil, errors.Wrap(err, "error in http.NewRequestWithContext")
 	}
 
 	req.Header.Add("Metadata", "true")
@@ -90,7 +112,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return false, errors.Wrap(err, "error in client.Do(req)")
+		return nil, errors.Wrap(err, "error in client.Do(req)")
 	}
 
 	defer resp.Body.Close()
@@ -99,7 +121,7 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return false, errors.Wrap(err, "error in io.ReadAll")
+		return nil, errors.Wrap(err, "error in io.ReadAll")
 	}
 
 	log.Debugf("response body: %s", string(body))
@@ -107,20 +129,28 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 	if len(body) == 0 {
 		log.Warn("Events response is empty")
 
-		return false, nil
+		return &types.ScheduledEventsType{}, nil
 	}
 
 	message := types.ScheduledEventsType{}
 
-	err = json.Unmarshal(body, &message)
+	if err := json.Unmarshal(body, &message); err != nil {
+		return nil, errors.Wrap(err, "error in json.Unmarshal")
+	}
+
+	return &message, nil
+}
+
+func (r *Reader) ReadEndpoint(ctx context.Context) (bool, error) {
+	message, err := r.getScheduledEvents(ctx)
 	if err != nil {
-		return false, errors.Wrap(err, "error in json.Unmarshal")
+		return false, errors.Wrap(err, "error in getScheduledEvents")
 	}
 
 	for _, event := range message.Events {
-		for _, r := range event.Resources {
-			if r == azureResource { //nolint:nestif
-				log.Info(string(body))
+		for _, resource := range event.Resources {
+			if resource == r.AzureResource {
+				log.Infof("%+v", message)
 
 				if cache.HasKey(event.EventId) {
 					log.Infof("Event %s already processed", event.EventId)
@@ -131,36 +161,11 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 				// add to cache, ignore similar events for 10 minutes
 				cache.Add(event.EventId, eventCacheTTL)
 
-				metrics.ScheduledEventsTotal.WithLabelValues(append(getsharedMetricsLabels(azureResource), string(event.EventType))...).Inc() //nolint:lll
+				metrics.ScheduledEventsTotal.WithLabelValues(append(r.getMetricsLabels(), string(event.EventType))...).Inc() //nolint:lll
 
-				nodeEvent := types.EventMessage{
-					Type:    "Warning",
-					Reason:  string(event.EventType),
-					Message: "Azure API sended schedule event for this node",
+				if r.EventReceived != nil {
+					return r.EventReceived(ctx, event)
 				}
-				if err := api.AddNodeEvent(ctx, &nodeEvent); err != nil {
-					log.WithError(err).Error()
-				}
-
-				if config.Get().IsExcludedEvent(event.EventType) {
-					log.Infof("Excluded event %s by user config", event.EventType)
-
-					continue
-				}
-
-				// send event in separate goroutine
-				go func() {
-					if err := sendEvent(ctx, event); err != nil {
-						log.WithError(err).Error("error in sendEvent")
-					}
-				}()
-
-				err = api.DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId)
-				if err != nil {
-					return false, errors.Wrap(err, "error in DrainNode")
-				}
-
-				return true, nil
 			}
 		}
 	}
@@ -168,30 +173,15 @@ func readEndpoint(ctx context.Context, azureResource string) (bool, error) { //n
 	return false, nil
 }
 
-func getsharedMetricsLabels(resourceName string) []string {
+func (r *Reader) getMetricsLabels() []string {
 	return []string{
-		*config.Get().NodeName,
-		resourceName,
+		r.NodeName,
+		r.AzureResource,
 	}
 }
 
-func sendEvent(ctx context.Context, event types.ScheduledEventsEvent) error {
-	message, err := template.NewMessageType(ctx, *config.Get().NodeName, event)
-	if err != nil {
-		return errors.Wrap(err, "error in template.NewMessageType")
-	}
+func (r *Reader) String() string {
+	b, _ := json.Marshal(r) //nolint:errchkjson
 
-	log.Infof("Message: %+v", message)
-
-	message.Template = *config.Get().AlertMessage
-
-	if err := alert.SendTelegram(message); err != nil {
-		log.WithError(err).Error("error in alert.SendTelegram")
-	}
-
-	if err := webhook.SendWebHook(ctx, message); err != nil {
-		log.WithError(err).Error("error in webhook.SendWebHook")
-	}
-
-	return nil
+	return string(b)
 }
