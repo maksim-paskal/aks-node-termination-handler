@@ -6,5 +6,4 @@ ignore:
 # ignore because to test need active connection to the kubernetes cluster
 - "pkg/web/web.go"
 - "pkg/api/api.go"
-- "pkg/events/events.go"
 - "pkg/client/client.go"

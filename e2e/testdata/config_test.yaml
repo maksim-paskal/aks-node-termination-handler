@@ -1,2 +1,4 @@
-taintNode: true
-taintEffect: NoSchedule
+taintnode: true
+tainteffect: NoSchedule
+podgraceperiodseconds: 30
+exitafternodedrain: true

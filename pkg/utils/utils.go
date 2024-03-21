@@ -15,9 +15,13 @@ package utils
 import (
 	"context"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func SleepWithContext(ctx context.Context, d time.Duration) {
+	log.Debugf("Sleep %s", d)
+
 	select {
 	case <-ctx.Done():
 		return
