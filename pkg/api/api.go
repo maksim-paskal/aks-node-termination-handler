@@ -124,7 +124,7 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 	var err error
 
 	updateErr := wait.ExponentialBackoff(retry.DefaultBackoff, func() (bool, error) {
-		if freshNode, err = client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, freshNode.Name, metav1.GetOptions{}); err != nil { //nolint:lll
+		if freshNode, err = client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, freshNode.Name, metav1.GetOptions{}); err != nil {
 			nodeErr := errors.Wrapf(err, "failed to get node %s", freshNode.Name)
 			log.Error(nodeErr)
 

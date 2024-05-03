@@ -139,11 +139,11 @@ func printType(prefix string, message interface{}) {
 func TestNewMessageType(t *testing.T) {
 	t.Parallel()
 
-	if _, err := template.NewMessageType(context.TODO(), "!!invalid!!GetNodeLabels", types.ScheduledEventsEvent{}); err == nil { //nolint:lll
+	if _, err := template.NewMessageType(context.TODO(), "!!invalid!!GetNodeLabels", types.ScheduledEventsEvent{}); err == nil {
 		t.Fatal("error expected")
 	}
 
-	if _, err := template.NewMessageType(context.TODO(), "!!invalid!!GetNodePods", types.ScheduledEventsEvent{}); err == nil { //nolint:lll
+	if _, err := template.NewMessageType(context.TODO(), "!!invalid!!GetNodePods", types.ScheduledEventsEvent{}); err == nil {
 		t.Fatal("error expected")
 	}
 
