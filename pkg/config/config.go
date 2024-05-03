@@ -95,14 +95,14 @@ var config = Type{
 	WebHookURL:             flag.String("webhook.url", os.Getenv("WEBHOOK_URL"), "send alerts to webhook"),
 	WebHookTimeout:         flag.Duration("webhook.timeout", defaultWebHookTimeout, "request timeout"),
 	WebHookTemplate:        flag.String("webhook.template", os.Getenv("WEBHOOK_TEMPLATE"), "request body"),
-	WebHookTemplateFile:    flag.String("webhook.template-file", os.Getenv("WEBHOOK_TEMPLATE_FILE"), "path to request body template file"), //nolint:lll
+	WebHookTemplateFile:    flag.String("webhook.template-file", os.Getenv("WEBHOOK_TEMPLATE_FILE"), "path to request body template file"),
 	SentryDSN:              flag.String("sentry.dsn", "", "sentry DSN"),
 	WebHTTPAddress:         flag.String("web.address", ":17923", ""),
 	TaintNode:              flag.Bool("taint.node", false, "Taint the node before cordon and draining"),
 	TaintEffect:            flag.String("taint.effect", "NoSchedule", "Taint effect to set on the node"),
-	PodGracePeriodSeconds:  flag.Int("podGracePeriodSeconds", defaultPodGracePeriodSeconds, "grace period is seconds for pods termination"), //nolint:lll
-	NodeGracePeriodSeconds: flag.Int("nodeGracePeriodSeconds", defaultNodeGracePeriodSeconds, "maximum time in seconds to drain the node"),  //nolint:lll
-	GracePeriodSeconds:     flag.Int("gracePeriodSeconds", defaultGracePeriodSecond, "grace period is seconds for application termination"), //nolint:lll
+	PodGracePeriodSeconds:  flag.Int("podGracePeriodSeconds", defaultPodGracePeriodSeconds, "grace period is seconds for pods termination"),
+	NodeGracePeriodSeconds: flag.Int("nodeGracePeriodSeconds", defaultNodeGracePeriodSeconds, "maximum time in seconds to drain the node"),
+	GracePeriodSeconds:     flag.Int("gracePeriodSeconds", defaultGracePeriodSecond, "grace period is seconds for application termination"),
 	DrainOnFreezeEvent:     flag.Bool("drainOnFreezeEvent", false, "drain node on freeze event"),
 	ResourceName:           flag.String("resource.name", "", "Azure resource name to drain"),
 	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),

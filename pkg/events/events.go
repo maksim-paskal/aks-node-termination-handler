@@ -161,7 +161,7 @@ func (r *Reader) ReadEndpoint(ctx context.Context) (bool, error) {
 				// add to cache, ignore similar events for 10 minutes
 				cache.Add(event.EventId, eventCacheTTL)
 
-				metrics.ScheduledEventsTotal.WithLabelValues(append(r.getMetricsLabels(), string(event.EventType))...).Inc() //nolint:lll
+				metrics.ScheduledEventsTotal.WithLabelValues(append(r.getMetricsLabels(), string(event.EventType))...).Inc()
 
 				if r.EventReceived != nil {
 					return r.EventReceived(ctx, event)
