@@ -186,6 +186,28 @@ aks-node-termination-handler/aks-node-termination-handler \
 
 ## Simulate eviction
 
+### Using Azure CLI
+
+You need to install [Azure Command-Line Interface](https://learn.microsoft.com/en-us/cli/azure/), also you need setup [kubectl](https://learn.microsoft.com/en-us/azure/aks/learn/quick-kubernetes-deploy-cli#connect-to-the-cluster) to your AKS cluster
+
+```bash
+# Azure CLI version is 2.61.0
+az --version
+
+# Choose your AKS node to simulate eviction
+kubectl get no
+
+# Identify your node Azure ID
+# subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachineScaleSets/{}/virtualMachines/{}
+kubectl get no aks-nodename-to-simulate-eviction -o json | jq -r '.spec.providerID[9:]'
+
+# Append to your node Azure ID additional path /simulateEviction?api-version=2024-03-01
+# And execute this simulation with management.azure.com
+az rest --verbose -m post --header "Accept=application/json" -u "https://management.azure.com/{Azure ID}/simulateEviction?api-version=2024-03-01"
+```
+
+### Using browser
+
 You can test with [Simulate Eviction API](https://docs.microsoft.com/en-us/rest/api/compute/virtual-machines/simulate-eviction) and change API endpoint to correspond `virtualMachineScaleSets` that are used in AKS.
 
 ```bash
