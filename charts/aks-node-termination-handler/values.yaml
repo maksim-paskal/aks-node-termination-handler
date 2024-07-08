@@ -1,5 +1,6 @@
 image: paskalmaksim/aks-node-termination-handler:latest
 imagePullPolicy: Always
+imagePullSecrets: []
 
 args: []
 env: []
