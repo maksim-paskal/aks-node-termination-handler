@@ -14,6 +14,7 @@ package internal
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
@@ -21,6 +22,7 @@ import (
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/events"
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/web"
@@ -41,6 +43,13 @@ func Run(ctx context.Context) error {
 	}
 
 	log.Debugf("using config: %s", config.Get().String())
+
+	webhook.SetHTTPClient(&http.Client{
+		Transport: metrics.NewInstrumenter("webhook").
+			WithProxy(*config.Get().WebhookProxy).
+			WithInsecureSkipVerify(*config.Get().WebhookInsecure).
+			InstrumentedRoundTripper(),
+	})
 
 	err = alert.Init()
 	if err != nil {

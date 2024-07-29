@@ -20,17 +20,18 @@ import (
 	"os"
 
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-var client = &http.Client{
-	Transport: metrics.NewInstrumenter("webhook", true).InstrumentedRoundTripper(),
-}
+var client = &http.Client{}
 
 var errHTTPNotOK = errors.New("http result not OK")
+
+func SetHTTPClient(c *http.Client) {
+	client = c
+}
 
 func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	ctx, cancel := context.WithTimeout(ctx, *config.Get().WebHookTimeout)

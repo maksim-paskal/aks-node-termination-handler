@@ -184,6 +184,37 @@ aks-node-termination-handler/aks-node-termination-handler \
 ```
 </details>
 
+<details>
+  <summary>Use an HTTP proxy for making webhook requests</summary>
+
+Use the flag `-webhook.http-proxy=http://someproxy:3128` for making requests with a proxy. This flag can use HTTP or HTTPS addresses. You can also use basic auth.
+
+```bash
+cat <<EOF | tee values.yaml
+priorityClassName: system-node-critical
+
+args:
+- -webhook.url=https://someserver/somepath
+- -webhook.template-file=/files/payload.json
+- -webhook.contentType=text/plain
+- -webhook.method=POST
+- -webhook.timeout=30s
+- -webhook.http-proxy=https://someproxy:3128
+
+configMap:
+  data:
+    payload.json: "This is message for {{ .NodeName }}, {{ .InstanceType }} from {{ .NodeRegion }}"
+EOF
+
+# install/upgrade helm chart
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--values values.yaml
+```
+</details>
+
 ## Simulate eviction
 
 ### Using Azure CLI

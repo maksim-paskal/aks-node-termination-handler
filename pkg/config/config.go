@@ -66,6 +66,8 @@ type Type struct {
 	WebHookTemplateFile    *string
 	WebHookMethod          *string
 	WebHookTimeout         *time.Duration
+	WebhookInsecure        *bool
+	WebhookProxy           *string
 	SentryDSN              *string
 	WebHTTPAddress         *string
 	TaintNode              *bool
@@ -96,6 +98,8 @@ var config = Type{
 	WebHookTimeout:         flag.Duration("webhook.timeout", defaultWebHookTimeout, "request timeout"),
 	WebHookTemplate:        flag.String("webhook.template", os.Getenv("WEBHOOK_TEMPLATE"), "request body"),
 	WebHookTemplateFile:    flag.String("webhook.template-file", os.Getenv("WEBHOOK_TEMPLATE_FILE"), "path to request body template file"),
+	WebhookInsecure:        flag.Bool("webhook.insecureSkip", true, "skip tls verification for webhook"),
+	WebhookProxy:           flag.String("webhook.http-proxy", os.Getenv("WEBHOOK_HTTP_PROXY"), "use http proxy for webhook"),
 	SentryDSN:              flag.String("sentry.dsn", "", "sentry DSN"),
 	WebHTTPAddress:         flag.String("web.address", ":17923", ""),
 	TaintNode:              flag.Bool("taint.node", false, "Taint the node before cordon and draining"),

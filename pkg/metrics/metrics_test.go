@@ -77,7 +77,35 @@ func TestKubernetesMetrics(t *testing.T) {
 func TestInstrumenter(t *testing.T) {
 	t.Parallel()
 
-	instrumenter := metrics.NewInstrumenter("test", false)
+	instrumenter := metrics.NewInstrumenter("test")
+
+	r, err := instrumenter.InstrumentedRoundTripper().RoundTrip(httptest.NewRequest(http.MethodGet, ts.URL, nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+}
+
+func TestInstrumenterProxy(t *testing.T) {
+	t.Parallel()
+
+	instrumenter := metrics.NewInstrumenter("testproxy").
+		WithInsecureSkipVerify(true).
+		WithProxy(ts.URL)
+
+	r, err := instrumenter.InstrumentedRoundTripper().RoundTrip(httptest.NewRequest(http.MethodGet, ts.URL, nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+}
+
+func TestInstrumenterBabProxy(t *testing.T) {
+	t.Parallel()
+
+	instrumenter := metrics.NewInstrumenter("testbadproxy").
+		WithInsecureSkipVerify(true).
+		WithProxy("badproxy://badproxy:badproxy")
 
 	r, err := instrumenter.InstrumentedRoundTripper().RoundTrip(httptest.NewRequest(http.MethodGet, ts.URL, nil))
 	if err != nil {
