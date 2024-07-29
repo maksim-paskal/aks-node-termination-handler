@@ -26,6 +26,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 )
 
 const namespace = "aks_node_termination_handler"
@@ -33,15 +34,32 @@ const namespace = "aks_node_termination_handler"
 type Instrumenter struct {
 	subsystemIdentifier string
 	insecureSkipVerify  bool
+	proxyURL            *url.URL
 }
 
 // New creates a new Instrumenter. The subsystemIdentifier will be used as part of
 // the metric names (e.g. http_<identifier>_requests_total).
-func NewInstrumenter(subsystemIdentifier string, insecureSkipVerify bool) *Instrumenter {
+func NewInstrumenter(subsystemIdentifier string) *Instrumenter {
 	return &Instrumenter{
 		subsystemIdentifier: subsystemIdentifier,
-		insecureSkipVerify:  insecureSkipVerify,
 	}
+}
+
+func (i *Instrumenter) WithProxy(proxyURL string) *Instrumenter {
+	proxy, err := url.Parse(proxyURL)
+	if err != nil {
+		log.WithError(err).Errorf("error parsing proxy url %s for %s", proxyURL, i.subsystemIdentifier)
+	} else {
+		i.proxyURL = proxy
+	}
+
+	return i
+}
+
+func (i *Instrumenter) WithInsecureSkipVerify(insecure bool) *Instrumenter {
+	i.insecureSkipVerify = insecure
+
+	return i
 }
 
 // InstrumentedRoundTripper returns an instrumented round tripper.
@@ -71,15 +89,21 @@ func (i *Instrumenter) InstrumentedRoundTripper() http.RoundTripper {
 		[]string{"method"},
 	)
 
+	defaultTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: i.insecureSkipVerify, //nolint:gosec
+		},
+	}
+
+	if i.proxyURL != nil {
+		log.Infof("using http_proxy %s for %s", i.proxyURL.String(), i.subsystemIdentifier)
+
+		defaultTransport.Proxy = http.ProxyURL(i.proxyURL)
+	}
+
 	return promhttp.InstrumentRoundTripperInFlight(inFlightRequestsGauge,
 		promhttp.InstrumentRoundTripperDuration(requestLatencyHistogram,
-			i.instrumentRoundTripperEndpoint(requestsPerEndpointCounter,
-				&http.Transport{
-					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: i.insecureSkipVerify, //nolint:gosec
-					},
-				},
-			),
+			i.instrumentRoundTripperEndpoint(requestsPerEndpointCounter, defaultTransport),
 		),
 	)
 }

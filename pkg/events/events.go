@@ -34,7 +34,7 @@ const (
 )
 
 var httpClient = &http.Client{
-	Transport: metrics.NewInstrumenter("events", false).InstrumentedRoundTripper(),
+	Transport: metrics.NewInstrumenter("events").InstrumentedRoundTripper(),
 }
 
 type Reader struct {
