@@ -23,6 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
 	log "github.com/sirupsen/logrus"
@@ -61,11 +62,27 @@ func testWebhookRequest(r *http.Request) error {
 func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 	t.Parallel()
 
+	webhookClient := &http.Client{
+		Transport: metrics.NewInstrumenter("TestWebHook").
+			WithProxy("").
+			WithInsecureSkipVerify(true).
+			InstrumentedRoundTripper(),
+	}
+
+	webhookClientProxy := &http.Client{
+		Transport: metrics.NewInstrumenter("TestWebHookWithProxy").
+			WithProxy("http://someproxy").
+			WithInsecureSkipVerify(true).
+			InstrumentedRoundTripper(),
+	}
+
 	type Test struct {
-		Name     string
-		Args     map[string]string
-		Error    bool
-		NodeName string
+		Name         string
+		Args         map[string]string
+		Error        bool
+		ErrorMessage string
+		NodeName     string
+		HTTPClient   *http.Client
 	}
 
 	tests := []Test{
@@ -139,6 +156,15 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			},
 			NodeName: "!!invalid!!GetNodeLabels",
 		},
+		{
+			Error:        true,
+			ErrorMessage: "error making roundtrip: proxyconnect tcp: dial tcp",
+			Name:         "HTTPClientProxy",
+			Args: map[string]string{
+				"webhook.url": getWebhookURL(),
+			},
+			HTTPClient: webhookClientProxy,
+		},
 	}
 
 	// clear flags
@@ -166,9 +192,16 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 				messageType.NodeName = tc.NodeName
 			}
 
+			if httpClient := tc.HTTPClient; httpClient != nil {
+				webhook.SetHTTPClient(httpClient)
+			} else {
+				webhook.SetHTTPClient(webhookClient)
+			}
+
 			err := webhook.SendWebHook(context.TODO(), messageType)
 			if tc.Error {
 				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.ErrorMessage)
 			} else {
 				require.NoError(t, err)
 			}

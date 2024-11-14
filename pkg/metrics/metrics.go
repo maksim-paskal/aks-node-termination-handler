@@ -46,6 +46,10 @@ func NewInstrumenter(subsystemIdentifier string) *Instrumenter {
 }
 
 func (i *Instrumenter) WithProxy(proxyURL string) *Instrumenter {
+	if proxyURL == "" {
+		return i
+	}
+
 	proxy, err := url.Parse(proxyURL)
 	if err != nil {
 		log.WithError(err).Errorf("error parsing proxy url %s for %s", proxyURL, i.subsystemIdentifier)
