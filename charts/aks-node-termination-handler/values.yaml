@@ -27,6 +27,17 @@ configMap:
 extraVolumes: []
 extraVolumeMounts: []
 
+networkPolicy:
+  enabled: false
+  # controlPlaneIP: "123.X.X.X" # If not provided, network policy will allow all access to port 443/tcp
+  # additionalEgressRules:
+  # - ports:
+  #   - port: 443
+  #     protocol: TCP
+  #   to:
+  #   - ipBlock:
+  #       cidr: 124.X.X.X/24
+
 metrics:
   addAnnotations: true
 

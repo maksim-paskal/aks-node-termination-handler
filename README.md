@@ -333,3 +333,16 @@ aks-node-termination-handler/aks-node-termination-handler \
 --set priorityClassName=system-node-critical \
 --set hostNetwork=true
 ```
+
+## NetworkPolicy support
+
+To limit what the workload can communicate with, Networkpolicy can be added via `--set networkPolicy.enabled=true`. To only allow egress communication towards required endpoints, supply the control plane IP address via  `--set networkPolicy.controlPlaneIP=10.11.12.13`. Additional egress rules can be added via `--set networkPolicy.additionalEgressRules=[]`, see the chart-provided `values.yaml` file for examples.
+
+```bash
+helm upgrade aks-node-termination-handler \
+--install \
+--namespace kube-system \
+aks-node-termination-handler/aks-node-termination-handler \
+--set networkPolicy.enabled=true \
+--set networkPolicy.controlPlaneIP=10.11.12.2
+```
