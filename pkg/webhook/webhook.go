@@ -27,7 +27,7 @@ import (
 
 var client = &http.Client{}
 
-var errHTTPNotOK = errors.New("http result not OK")
+var ErrHTTPNotOK = errors.New("http result not OK")
 
 func SetHTTPClient(c *http.Client) {
 	client = c
@@ -77,7 +77,7 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 		"headers": req.Header,
 	}).Infof("Doing request with body: %s", requestBody.String())
 
-	resp, err := client.Do(req)
+	resp, err := DoRequestWithRetry(req, *config.Get().WebhookRetries)
 	if err != nil {
 		return errors.Wrap(err, "error in client.Do")
 	}
@@ -86,8 +86,41 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	log.Infof("response status: %s", resp.Status)
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
+		return errors.Wrap(ErrHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
 	}
 
 	return nil
+}
+
+func DoRequestWithRetry(req *http.Request, retries int) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+
+	for i := 0; i < retries; i++ {
+		log.Infof("Doing webhook request %d/%d", i+1, retries)
+		resp, err = client.Do(req)
+		if err != nil {
+			if i < retries-1 {
+				log.Warnf("Retrying due to error: %v", err)
+				continue
+			}
+			return nil, err
+		}
+
+		if resp != nil {
+			resp.Body.Close()
+		}
+
+		if resp != nil && resp.StatusCode >= 500 {
+			if i < retries-1 {
+				log.Warnf("Retrying due to server error: %s", resp.Status)
+				continue
+			}
+			return nil, ErrHTTPNotOK
+		}
+
+		break
+	}
+
+	return resp, nil
 }
