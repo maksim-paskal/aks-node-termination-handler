@@ -31,7 +31,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var retryableRequstCount = 0
+
 var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	if r.RequestURI == "/test-retryable" {
+		retryableRequstCount++
+
+		// return 500 for first 2 requests
+		if retryableRequstCount < 3 {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			_, _ = w.Write([]byte("OK"))
+		}
+
+		return
+	}
+
 	if err := testWebhookRequest(r); err != nil {
 		log.WithError(err).Error()
 		w.WriteHeader(http.StatusInternalServerError)
@@ -39,6 +54,10 @@ var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http
 		_, _ = w.Write([]byte("OK"))
 	}
 }))
+
+func getWebhookRetryableURL() string {
+	return ts.URL + "/test-retryable"
+}
 
 func getWebhookURL() string {
 	return ts.URL + "/metrics/job/aks-node-termination-handler"
@@ -77,6 +96,14 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 		InstrumentedRoundTripper()
 	retryClientProxy.RetryMax = 0
 
+	// retryable client with default retry settings
+	retryClientDefault := retryablehttp.NewClient()
+	retryClientDefault.HTTPClient.Transport = metrics.NewInstrumenter("TestWebHookWithDefaultSettings").
+		WithProxy("").
+		WithInsecureSkipVerify(true).
+		InstrumentedRoundTripper()
+	retryClientDefault.RetryMax = 3
+
 	type Test struct {
 		Name         string
 		Args         map[string]string
@@ -87,6 +114,13 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 	}
 
 	tests := []Test{
+		{
+			Name: "TestRetryable",
+			Args: map[string]string{
+				"webhook.url": getWebhookRetryableURL(),
+			},
+			HTTPClient: retryClientDefault,
+		},
 		{
 			Name: "ValidHookAndTemplate",
 			Args: map[string]string{
@@ -123,7 +157,8 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 				"webhook.url":      ts.URL,
 				"webhook.template": `{{ .NodeName }}`,
 			},
-			Error: true,
+			Error:        true,
+			ErrorMessage: "giving up after 1 attempt",
 		},
 		{
 			Name: "InvalidMethod",
@@ -208,4 +243,7 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			}
 		})
 	}
+
+	// Check retryable request counter, 3 requests should be made
+	require.Equal(t, 3, retryableRequstCount)
 }
