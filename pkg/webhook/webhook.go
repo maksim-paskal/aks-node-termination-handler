@@ -15,6 +15,8 @@ package webhook
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -25,6 +27,8 @@ import (
 )
 
 var client = &retryablehttp.Client{}
+
+var errHTTPNotOK = errors.New("http result not OK")
 
 func SetHTTPClient(c *retryablehttp.Client) {
 	client = c
@@ -79,6 +83,12 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 		return errors.Wrap(err, "error in client.Do")
 	}
 	defer resp.Body.Close()
+
+	log.Infof("response status: %s", resp.Status)
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
+	}
 
 	return nil
 }

@@ -34,6 +34,12 @@ import (
 var retryableRequstCount = 0
 
 var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	if r.RequestURI == "/-/400" {
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
 	if r.RequestURI == "/test-retryable" {
 		retryableRequstCount++
 
@@ -120,6 +126,15 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 				"webhook.url": getWebhookRetryableURL(),
 			},
 			HTTPClient: retryClientDefault,
+		},
+		{
+			Name: "TestRetryableCustomStatusCodes",
+			Args: map[string]string{
+				"webhook.url": ts.URL + "/-/400",
+			},
+			HTTPClient:   retryClientDefault,
+			Error:        true,
+			ErrorMessage: "http result not OK",
 		},
 		{
 			Name: "ValidHookAndTemplate",
