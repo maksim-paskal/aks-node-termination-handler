@@ -14,8 +14,8 @@ package internal
 
 import (
 	"context"
-	"net/http"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/alert"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/api"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/cache"
@@ -44,12 +44,13 @@ func Run(ctx context.Context) error {
 
 	log.Debugf("using config: %s", config.Get().String())
 
-	webhook.SetHTTPClient(&http.Client{
-		Transport: metrics.NewInstrumenter("webhook").
-			WithProxy(*config.Get().WebhookProxy).
-			WithInsecureSkipVerify(*config.Get().WebhookInsecure).
-			InstrumentedRoundTripper(),
-	})
+	retryClient := retryablehttp.NewClient()
+	retryClient.HTTPClient.Transport = metrics.NewInstrumenter("webhook").
+		WithProxy(*config.Get().WebhookProxy).
+		WithInsecureSkipVerify(*config.Get().WebhookInsecure).
+		InstrumentedRoundTripper()
+	retryClient.RetryMax = *config.Get().WebhookRetries
+	webhook.SetHTTPClient(retryClient)
 
 	err = alert.Init()
 	if err != nil {
