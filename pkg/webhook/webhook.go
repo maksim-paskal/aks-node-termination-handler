@@ -28,7 +28,7 @@ import (
 
 var client = &retryablehttp.Client{}
 
-var ErrHTTPNotOK = errors.New("http result not OK")
+var errHTTPNotOK = errors.New("http result not OK")
 
 func SetHTTPClient(c *retryablehttp.Client) {
 	client = c
@@ -87,7 +87,7 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	log.Infof("response status: %s", resp.Status)
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(ErrHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
+		return errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
 	}
 
 	return nil
