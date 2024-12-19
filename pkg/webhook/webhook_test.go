@@ -14,7 +14,6 @@ limitations under the License.
 package webhook_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -24,6 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
@@ -63,19 +63,19 @@ func testWebhookRequest(r *http.Request) error {
 func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 	t.Parallel()
 
-	webhookClient := &http.Client{
-		Transport: metrics.NewInstrumenter("TestWebHook").
-			WithProxy("").
-			WithInsecureSkipVerify(true).
-			InstrumentedRoundTripper(),
-	}
+	retryClient := retryablehttp.NewClient()
+	retryClient.HTTPClient.Transport = metrics.NewInstrumenter("TestWebHook").
+		WithProxy("").
+		WithInsecureSkipVerify(true).
+		InstrumentedRoundTripper()
+	retryClient.RetryMax = 0
 
-	webhookClientProxy := &http.Client{
-		Transport: metrics.NewInstrumenter("TestWebHookWithProxy").
-			WithProxy("http://someproxy").
-			WithInsecureSkipVerify(true).
-			InstrumentedRoundTripper(),
-	}
+	retryClientProxy := retryablehttp.NewClient()
+	retryClientProxy.HTTPClient.Transport = metrics.NewInstrumenter("TestWebHookWithProxy").
+		WithProxy("http://someproxy").
+		WithInsecureSkipVerify(true).
+		InstrumentedRoundTripper()
+	retryClientProxy.RetryMax = 0
 
 	type Test struct {
 		Name         string
@@ -83,7 +83,7 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 		Error        bool
 		ErrorMessage string
 		NodeName     string
-		HTTPClient   *http.Client
+		HTTPClient   *retryablehttp.Client
 	}
 
 	tests := []Test{
@@ -164,7 +164,7 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			Args: map[string]string{
 				"webhook.url": getWebhookURL(),
 			},
-			HTTPClient: webhookClientProxy,
+			HTTPClient: retryClientProxy,
 		},
 	}
 
@@ -196,7 +196,7 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			if httpClient := tc.HTTPClient; httpClient != nil {
 				webhook.SetHTTPClient(httpClient)
 			} else {
-				webhook.SetHTTPClient(webhookClient)
+				webhook.SetHTTPClient(retryClient)
 			}
 
 			err := webhook.SendWebHook(context.TODO(), messageType)
@@ -208,119 +208,4 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 			}
 		})
 	}
-}
-func TestDoRequestWithRetry(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name           string
-		retries        int
-		mockResponses  []*http.Response
-		mockErrors     []error
-		expectedError  error
-		expectedStatus int
-	}{
-		{
-			name:    "SuccessOnFirstTry",
-			retries: 3,
-			mockResponses: []*http.Response{
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(bytes.NewBufferString("OK")),
-				},
-			},
-			expectedError:  nil,
-			expectedStatus: http.StatusOK,
-		},
-		{
-			name:    "SuccessOnRetry",
-			retries: 3,
-			mockResponses: []*http.Response{
-				{
-					StatusCode: http.StatusInternalServerError,
-					Body:       io.NopCloser(bytes.NewBufferString("Internal Server Error")),
-				},
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(bytes.NewBufferString("OK")),
-				},
-			},
-			expectedError:  nil,
-			expectedStatus: http.StatusOK,
-		},
-		{
-			name:    "FailAfterRetries",
-			retries: 3,
-			mockResponses: []*http.Response{
-				{
-					StatusCode: http.StatusInternalServerError,
-					Body:       io.NopCloser(bytes.NewBufferString("Internal Server Error")),
-				},
-				{
-					StatusCode: http.StatusInternalServerError,
-					Body:       io.NopCloser(bytes.NewBufferString("Internal Server Error")),
-				},
-				{
-					StatusCode: http.StatusInternalServerError,
-					Body:       io.NopCloser(bytes.NewBufferString("Internal Server Error")),
-				},
-			},
-			expectedError:  webhook.ErrHTTPNotOK,
-			expectedStatus: http.StatusInternalServerError,
-		},
-		{
-			name:    "NetworkError",
-			retries: 3,
-			mockErrors: []error{
-				errors.New("network error"),
-				errors.New("network error"),
-				errors.New("network error"),
-			},
-			expectedError: errors.New("network error"),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockClient := &http.Client{
-				Transport: &mockTransport{
-					responses: tc.mockResponses,
-					errors:    tc.mockErrors,
-				},
-			}
-			webhook.SetHTTPClient(mockClient)
-
-			req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
-			require.NoError(t, err)
-
-			resp, err := webhook.DoRequestWithRetry(req, tc.retries)
-			if tc.expectedError != nil {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.expectedError.Error())
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedStatus, resp.StatusCode)
-			}
-		})
-	}
-}
-
-type mockTransport struct {
-	responses []*http.Response
-	errors    []error
-	index     int
-}
-
-func (m *mockTransport) RoundTrip(*http.Request) (*http.Response, error) {
-	if m.index < len(m.errors) && m.errors[m.index] != nil {
-		err := m.errors[m.index]
-		m.index++
-		return nil, err
-	}
-	if m.index < len(m.responses) {
-		resp := m.responses[m.index]
-		m.index++
-		return resp, nil
-	}
-	return nil, errors.New("no more mock responses")
 }

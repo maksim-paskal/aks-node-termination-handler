@@ -19,17 +19,18 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-var client = &http.Client{}
+var client = &retryablehttp.Client{}
 
 var ErrHTTPNotOK = errors.New("http result not OK")
 
-func SetHTTPClient(c *http.Client) {
+func SetHTTPClient(c *retryablehttp.Client) {
 	client = c
 }
 
@@ -64,9 +65,9 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 
 	requestBody := bytes.NewBufferString(webhookBody + "\n")
 
-	req, err := http.NewRequestWithContext(ctx, *config.Get().WebHookMethod, *config.Get().WebHookURL, requestBody)
+	req, err := retryablehttp.NewRequest(*config.Get().WebHookMethod, *config.Get().WebHookURL, requestBody)
 	if err != nil {
-		return errors.Wrap(err, "error in http.NewRequestWithContext")
+		return errors.Wrap(err, "error in retryablehttp.NewRequest")
 	}
 
 	req.Header.Set("Content-Type", *config.Get().WebHookContentType)
@@ -77,7 +78,7 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 		"headers": req.Header,
 	}).Infof("Doing request with body: %s", requestBody.String())
 
-	resp, err := DoRequestWithRetry(req, *config.Get().WebhookRetries)
+	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "error in client.Do")
 	}
@@ -90,37 +91,4 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	}
 
 	return nil
-}
-
-func DoRequestWithRetry(req *http.Request, retries int) (*http.Response, error) {
-	var resp *http.Response
-	var err error
-
-	for i := 0; i < retries; i++ {
-		log.Infof("Doing webhook request %d/%d", i+1, retries)
-		resp, err = client.Do(req)
-		if err != nil {
-			if i < retries-1 {
-				log.Warnf("Retrying due to error: %v", err)
-				continue
-			}
-			return nil, err
-		}
-
-		if resp != nil {
-			resp.Body.Close()
-		}
-
-		if resp != nil && resp.StatusCode >= 500 {
-			if i < retries-1 {
-				log.Warnf("Retrying due to server error: %s", resp.Status)
-				continue
-			}
-			return nil, ErrHTTPNotOK
-		}
-
-		break
-	}
-
-	return resp, nil
 }
