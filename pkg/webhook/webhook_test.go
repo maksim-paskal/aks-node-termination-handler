@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var retryableRequstCount = 0
+var retryableRequestCount = 0
 
 var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	if r.RequestURI == "/-/400" {
@@ -41,10 +41,10 @@ var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http
 	}
 
 	if r.RequestURI == "/test-retryable" {
-		retryableRequstCount++
+		retryableRequestCount++
 
 		// return 500 for first 2 requests
-		if retryableRequstCount < 3 {
+		if retryableRequestCount < 3 {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
 			_, _ = w.Write([]byte("OK"))
@@ -260,5 +260,5 @@ func TestWebHook(t *testing.T) { //nolint:funlen,tparallel
 	}
 
 	// Check retryable request counter, 3 requests should be made
-	require.Equal(t, 3, retryableRequstCount)
+	require.Equal(t, 3, retryableRequestCount)
 }
