@@ -134,6 +134,7 @@ args:
 - -webhook.contentType=application/json
 - -webhook.method=POST
 - -webhook.timeout=30s
+- -webhook.retries=3
 
 configMap:
   data:
@@ -168,6 +169,7 @@ args:
 - -webhook.contentType=text/plain
 - -webhook.method=POST
 - -webhook.timeout=30s
+- -webhook.retries=3
 
 configMap:
   data:
@@ -200,6 +202,7 @@ args:
 - -webhook.method=POST
 - -webhook.timeout=30s
 - -webhook.http-proxy=https://someproxy:3128
+- -webhook.retries=3
 
 configMap:
   data:
