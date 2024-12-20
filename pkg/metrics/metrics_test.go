@@ -86,6 +86,18 @@ func TestInstrumenter(t *testing.T) {
 	defer r.Body.Close()
 }
 
+func TestInstrumenterWithEmptyProxy(t *testing.T) {
+	t.Parallel()
+
+	instrumenter := metrics.NewInstrumenter("TestInstrumenterWithEmptyProxy").WithProxy("")
+
+	r, err := instrumenter.InstrumentedRoundTripper().RoundTrip(httptest.NewRequest(http.MethodGet, ts.URL, nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+}
+
 func TestInstrumenterProxy(t *testing.T) {
 	t.Parallel()
 
