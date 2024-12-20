@@ -34,6 +34,10 @@ func SetHTTPClient(c *retryablehttp.Client) {
 	client = c
 }
 
+func isResponseStatusOK(statusCode int) bool {
+	return statusCode >= 200 && statusCode < 300
+}
+
 func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	ctx, cancel := context.WithTimeout(ctx, *config.Get().WebHookTimeout)
 	defer cancel()
@@ -86,7 +90,7 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 
 	log.Infof("response status: %s", resp.Status)
 
-	if resp.StatusCode != http.StatusOK {
+	if !isResponseStatusOK(resp.StatusCode) {
 		return errors.Wrap(errHTTPNotOK, fmt.Sprintf("StatusCode=%d", resp.StatusCode))
 	}
 
