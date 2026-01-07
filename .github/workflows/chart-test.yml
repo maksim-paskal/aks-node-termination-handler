@@ -1,4 +1,8 @@
-on: pull_request
+on:
+  pull_request:
+    paths:
+      - 'charts/aks-node-termination-handler/**'
+      - '.github/workflows/chart-test.yml'
 
 jobs:
   lint-test:

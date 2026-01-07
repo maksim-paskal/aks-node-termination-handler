@@ -3,6 +3,11 @@ on:
     branches:
       - main
   pull_request:
+    paths:
+      - '**/**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/test.yml'
 
 jobs:
   test:
