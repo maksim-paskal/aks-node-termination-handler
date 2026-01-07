@@ -1,4 +1,4 @@
-image: paskalmaksim/aks-node-termination-handler:latest
+image: paskalmaksim/aks-node-termination-handler:latest@sha256:718405dbbd0a943c2aac0feedf3dafd04b2833a92cb1e37fbb929b2ef45a15d0
 imagePullPolicy: Always
 imagePullSecrets: []
 

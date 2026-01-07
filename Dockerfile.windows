@@ -1,4 +1,4 @@
-ARG WINDOWS_VERSION=ltsc2025
+ARG WINDOWS_VERSION=ltsc2025@sha256:5e9a1be8f0685f35156a524fb8a88b9d36085db12def20eb52e11b0bb1f79a10
 
 FROM mcr.microsoft.com/windows/nanoserver:$WINDOWS_VERSION
 
