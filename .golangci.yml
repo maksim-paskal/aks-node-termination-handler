@@ -1,26 +1,15 @@
+---
+version: "2"
 run:
   timeout: 5m
 issues:
   fix: true
-linters-settings:
-  lll:
-    line-length: 200
 linters:
-  enable-all: true
-  disable:
-  - deadcode # deprecated
-  - exhaustivestruct # deprecated
-  - golint # deprecated
-  - ifshort # deprecated
-  - interfacer # deprecated
-  - maligned # deprecated
-  - nosnakecase # deprecated
-  - scopelint # deprecated
-  - structcheck # deprecated
-  - varcheck # deprecated
-  - gochecknoglobals
-  - exhaustivestruct
-  - exhaustruct
-  - varnamelen
-  - musttag
-  - depguard
+  default: all
+  settings:
+    lll:
+      line-length: 200
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
