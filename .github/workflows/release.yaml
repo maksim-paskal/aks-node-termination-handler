@@ -39,7 +39,7 @@ jobs:
       - run: cp Dockerfile ./dist/aks-node-termination-handler_linux_arm64/Dockerfile
       - run: cp Dockerfile.windows ./dist/aks-node-termination-handler_windows_amd64_v1/Dockerfile
       - run: tar -cvf release.tar ./dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: release
           retention-days: 1
@@ -53,7 +53,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
       - run: tar xvf ./release/release.tar
       - run: "docker build --pull --push --platform linux/amd64 -t ${{ env.IMAGE }}-linux-amd64 ."
         working-directory: ./dist/aks-node-termination-handler_linux_amd64_v1
@@ -68,7 +68,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
       - run: tar xvf ./release/release.tar
       - run: "docker build --pull --push --platform linux/arm64 -t ${{ env.IMAGE }}-linux-arm64 ."
         working-directory: ./dist/aks-node-termination-handler_linux_arm64
@@ -84,7 +84,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
       - run: tar xvf ./release/release.tar
       - run: "docker build --build-arg WINDOWS_VERSION=${{ matrix.windows-version }} --pull --platform windows/amd64 -t ${{ env.IMAGE }}-windows-${{ matrix.windows-version }}-amd64 ."
         working-directory: ./dist/aks-node-termination-handler_windows_amd64_v1
