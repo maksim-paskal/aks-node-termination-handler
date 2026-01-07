@@ -27,7 +27,7 @@ jobs:
       - name: Remove Git Tags with Charts
         run: git tag -d $(git tag -l "helm-chart-*")
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
           distribution: goreleaser
           version: latest
