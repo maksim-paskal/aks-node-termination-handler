@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/utils"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
 )
 
 func TestSleepWithContext(t *testing.T) {

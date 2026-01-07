@@ -15,7 +15,7 @@ package logger_test
 import (
 	"testing"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/logger"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/logger"
 )
 
 func TestKubectlLogger(t *testing.T) {

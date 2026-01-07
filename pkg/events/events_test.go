@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/events"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/utils"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/events"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 

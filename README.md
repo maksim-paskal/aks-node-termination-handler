@@ -1,6 +1,6 @@
-![codecov](https://codecov.io/gh/maksim-paskal/aks-node-termination-handler/graph/badge.svg?token=0Z0ENDM8VW)
-![Docker Pulls](https://img.shields.io/docker/pulls/paskalmaksim/aks-node-termination-handler.svg)
-![Licence](https://img.shields.io/github/license/maksim-paskal/aks-node-termination-handler.svg)
+![codecov](https://codecov.io/gh/vince-riv/aks-node-termination-handler/graph/badge.svg?token=0Z0ENDM8VW)
+<!-- ![Docker Pulls](https://img.shields.io/docker/pulls/paskalmaksim/aks-node-termination-handler.svg) -->
+<!-- ![Licence](https://img.shields.io/github/license/vince-riv/aks-node-termination-handler.svg) -->
 
 # AKS Node Termination Handler
 
@@ -92,7 +92,7 @@ az aks get-credentials \
 ## Installation
 
 ```bash
-helm repo add aks-node-termination-handler https://maksim-paskal.github.io/aks-node-termination-handler/
+helm repo add aks-node-termination-handler https://vince-riv.github.io/aks-node-termination-handler/
 helm repo update
 
 helm upgrade aks-node-termination-handler \

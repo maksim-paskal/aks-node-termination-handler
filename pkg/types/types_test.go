@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 )
 
 func TestScheduledEventsType(t *testing.T) {

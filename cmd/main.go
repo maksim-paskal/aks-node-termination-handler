@@ -21,10 +21,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/internal"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
 	logrushooksentry "github.com/maksim-paskal/logrus-hook-sentry"
 	log "github.com/sirupsen/logrus"
+	"github.com/vince-riv/aks-node-termination-handler/internal"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
 )
 
 var version = flag.Bool("version", false, "version")

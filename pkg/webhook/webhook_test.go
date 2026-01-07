@@ -24,9 +24,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/webhook"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/metrics"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/template"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/webhook"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )

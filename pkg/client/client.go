@@ -13,8 +13,8 @@ limitations under the License.
 package client
 
 import (
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/metrics"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/metrics"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"

@@ -21,8 +21,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/template"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/template"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 )
 
 const fakeTemplate = "{{"

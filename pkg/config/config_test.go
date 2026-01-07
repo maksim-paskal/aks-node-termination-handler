@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/config"
-	"github.com/maksim-paskal/aks-node-termination-handler/pkg/types"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
