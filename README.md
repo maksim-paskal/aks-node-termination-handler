@@ -271,7 +271,7 @@ aks-node-termination-handler/aks-node-termination-handler \
 --set image=paskalmaksim/aks-node-termination-handler:latest-ltsc2019
 ```
 
-If your cluster includes Linux, Windows 2022, and Windows 2019 nodes, you will need two separate helm installations of `aks-node-termination-handler`, each with different values.
+If your cluster includes Linux, Windows 2025, Windows 2022, and Windows 2019 nodes, you will need two separate helm installations of `aks-node-termination-handler`, each with different values.
 
 <details>
   <summary>linux-windows2022.values.yaml</summary>
@@ -289,6 +289,7 @@ affinity:
         - key: kubernetes.azure.com/os-sku
           operator: NotIn
           values:
+          - Windows2025
           - Windows2019
 ```
 </details>
