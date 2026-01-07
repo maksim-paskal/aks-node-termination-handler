@@ -1,26 +1,30 @@
+---
+version: "2"
 run:
   timeout: 5m
 issues:
   fix: true
-linters-settings:
-  lll:
-    line-length: 200
 linters:
-  enable-all: true
-  disable:
-  - deadcode # deprecated
-  - exhaustivestruct # deprecated
-  - golint # deprecated
-  - ifshort # deprecated
-  - interfacer # deprecated
-  - maligned # deprecated
-  - nosnakecase # deprecated
-  - scopelint # deprecated
-  - structcheck # deprecated
-  - varcheck # deprecated
-  - gochecknoglobals
-  - exhaustivestruct
-  - exhaustruct
-  - varnamelen
-  - musttag
-  - depguard
+  default: all
+  settings:
+    lll:
+      line-length: 200
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+    depguard:
+      rules:
+        default:
+          # list-mode can be "strict", "lax", or "original"
+          list-mode: lax  # allow all; unless in deny list
+          # $all matches all go files (except test files if configured)
+          files:
+            - "$all"
+            # - "!$test"
+          allow:
+            - "$gostd"
+          deny: []
+          #  # Optionally, deny specific packages with a suggestion
+          #  - pkg: "io/ioutil"
+          #    desc: "replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil"
