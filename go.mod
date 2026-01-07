@@ -1,8 +1,8 @@
 module github.com/vince-riv/aks-node-termination-handler
 
-go 1.23.0
+go 1.25.0
 
-toolchain go1.23.4
+toolchain go1.25.5
 
 require (
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
