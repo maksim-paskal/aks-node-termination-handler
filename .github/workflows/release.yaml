@@ -55,7 +55,11 @@ jobs:
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
         with:
           go-version-file: 'go.mod'
+      - name: Remove Git Tags with Charts
+        ## This is needed for goreleaser to detect the previous release correctly
+        run: git tag -d $(git tag -l "helm-chart-*")
       - name: GoReleaser Snapshot
+        ## Use --snapshot for dev builds
         if: ${{ steps.version.outputs.IS_TAG != 'true' }}
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
@@ -65,10 +69,6 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.VERSION }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Remove Git Tags with Charts
-        if: ${{ steps.version.outputs.IS_TAG == 'true' }}
-        ## This is needed for goreleaser to detect the previous releases correctly
-        run: git tag -d $(git tag -l "helm-chart-*")
       - name: GoReleaser Release
         if: ${{ steps.version.outputs.IS_TAG == 'true' }}
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
