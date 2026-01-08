@@ -1,5 +1,5 @@
 /*
-Copyright paskal.maksim@gmail.com
+Copyright paskal.maksim@gmail.com (Original Author 2021-2025)
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -34,6 +34,7 @@ const (
 	defaultGracePeriodSecond      = 10
 	defaultRequestTimeout         = 5 * time.Second
 	defaultWebHookTimeout         = 30 * time.Second
+	defaultDryRun                 = false
 )
 
 const (
@@ -51,7 +52,7 @@ type Type struct {
 	ConfigFile             *string
 	LogPretty              *bool
 	LogLevel               *string
-	DevelopmentMode        *bool
+	DryRun                 *bool
 	KubeConfigFile         *string
 	Endpoint               *string
 	NodeName               *string
@@ -114,6 +115,7 @@ var config = Type{
 	ResourceName:           flag.String("resource.name", "", "Azure resource name to drain"),
 	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),
 	DisableEviction:        flag.Bool("disableEviction", false, "if true, force drain to use delete, even if eviction is supported. This will bypass checking PodDisruptionBudgets"),
+	DryRun:                 flag.Bool("dryRun", defaultDryRun, "if true, nodes will not be tainted, cordoned, or drained"),
 }
 
 func (t *Type) GracePeriod() time.Duration {
