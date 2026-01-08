@@ -1,5 +1,6 @@
 /*
-Copyright paskal.maksim@gmail.com
+Copyright paskal.maksim@gmail.com (Original Author 2021-2025)
+Copyright github@vince-riv.io (Modifications 2026-present)
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -18,12 +19,12 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/client"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/logger"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apierrorrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,12 +93,16 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		Timeout:             config.Get().NodeGracePeriod(),
 	}
 
-	if err := drain.RunCordonOrUncordon(helper, node, true); err != nil {
-		return errors.Wrap(err, "error in drain.RunCordonOrUncordon")
-	}
+	if *config.Get().DryRun {
+		log.Infof("DRY RUN ENABLED; skipping cordoning and draining of node %s", node.Name)
+	} else {
+		if err := drain.RunCordonOrUncordon(helper, node, true); err != nil {
+			return errors.Wrap(err, "error in drain.RunCordonOrUncordon")
+		}
 
-	if err := drain.RunNodeDrain(helper, node.Name); err != nil {
-		return errors.Wrap(err, "error in drain.RunNodeDrain")
+		if err := drain.RunNodeDrain(helper, node.Name); err != nil {
+			return errors.Wrap(err, "error in drain.RunNodeDrain")
+		}
 	}
 
 	// taint node after draining if effect is TaintEffectNoExecute
@@ -155,6 +160,10 @@ func addTaint(ctx context.Context, node *corev1.Node, taintKey string, taintValu
 }
 
 func updateNodeWith(ctx context.Context, taintKey string, taintValue string, node *corev1.Node) error {
+	if *config.Get().DryRun {
+		log.Infof("DRY RUN ENABLED; skipping adding taint %s=%s on node %s", taintKey, taintValue, node.Name)
+		return nil
+	}
 	node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
 		Key:    taintKey,
 		Value:  taintValue,

@@ -19,10 +19,10 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
-	"github.com/vince-riv/aks-node-termination-handler/pkg/template"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/template"
 )
 
 var client = &retryablehttp.Client{}

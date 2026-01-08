@@ -17,9 +17,9 @@ import (
 	"context"
 	"html/template"
 
+	"github.com/pkg/errors"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/api"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
-	"github.com/pkg/errors"
 )
 
 type MessageType struct {

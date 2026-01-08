@@ -16,6 +16,8 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/alert"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/api"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/cache"
@@ -27,8 +29,6 @@ import (
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/web"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/webhook"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 func Run(ctx context.Context) error {

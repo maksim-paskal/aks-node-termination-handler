@@ -21,10 +21,10 @@ import (
 	"testing"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/events"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
-	log "github.com/sirupsen/logrus"
 )
 
 func TestReadingEvents(t *testing.T) { //nolint:funlen

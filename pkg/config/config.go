@@ -1,5 +1,6 @@
 /*
-Copyright paskal.maksim@gmail.com
+Copyright paskal.maksim@gmail.com (Original Author 2021-2025)
+Copyright github@vince-riv.io (Modifications 2026-present)
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -19,8 +20,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"github.com/pkg/errors"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -34,6 +35,7 @@ const (
 	defaultGracePeriodSecond      = 10
 	defaultRequestTimeout         = 5 * time.Second
 	defaultWebHookTimeout         = 30 * time.Second
+	defaultDryRun                 = false
 )
 
 const (
@@ -51,7 +53,7 @@ type Type struct {
 	ConfigFile             *string
 	LogPretty              *bool
 	LogLevel               *string
-	DevelopmentMode        *bool
+	DryRun                 *bool
 	KubeConfigFile         *string
 	Endpoint               *string
 	NodeName               *string
@@ -112,6 +114,7 @@ var config = Type{
 	DrainOnFreezeEvent:     flag.Bool("drainOnFreezeEvent", false, "drain node on freeze event"),
 	ResourceName:           flag.String("resource.name", "", "Azure resource name to drain"),
 	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),
+	DryRun:                 flag.Bool("dryRun", defaultDryRun, "if true, nodes will not be tainted, cordoned, or drained"),
 }
 
 func (t *Type) GracePeriod() time.Duration {

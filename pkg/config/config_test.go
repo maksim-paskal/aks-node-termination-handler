@@ -16,10 +16,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
-	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 )
 
 //nolint:paralleltest

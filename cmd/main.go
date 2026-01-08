@@ -53,6 +53,9 @@ func main() {
 	defer cancel()
 
 	log.Infof("Starting %s...", config.GetVersion())
+	if *config.Get().DryRun {
+		log.Info("DRY RUN MODE ENABLED: No changes will be made to the cluster")
+	}
 
 	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
 		SentryDSN: *config.Get().SentryDSN,

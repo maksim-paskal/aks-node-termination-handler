@@ -24,11 +24,11 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-retryablehttp"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/metrics"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/template"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/webhook"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 )
 
 var retryableRequestCount = 0
