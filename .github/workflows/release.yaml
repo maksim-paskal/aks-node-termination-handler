@@ -65,6 +65,10 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.VERSION }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove Git Tags with Charts
+        if: ${{ steps.version.outputs.IS_TAG == 'true' }}
+        ## This is needed for goreleaser to detect the previous releases correctly
+        run: git tag -d $(git tag -l "helm-chart-*")
       - name: GoReleaser Release
         if: ${{ steps.version.outputs.IS_TAG == 'true' }}
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
