@@ -1,0 +1,41 @@
+---
+version: 2
+
+project_name: aks-node-termination-handler
+
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
+
+before:
+  hooks:
+    - go mod tidy
+
+release:
+  footer: |
+    ## Docker Images
+    - `{{ envOrDefault "REGISTRY" "gchcr.io" }}/{{ envOrDefault "IMAGE_NAME" "vince-riv/aks-node-termination-handler" }}:latest`
+    - `{{ envOrDefault "REGISTRY" "gchcr.io" }}/{{ envOrDefault "IMAGE_NAME" "vince-riv/aks-node-termination-handler" }}:{{ envOrDefault "RELEASE_VERSION" "v0.0.0" }}`
+builds:
+  - dir: ./cmd/
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/vince-riv/aks-node-termination-handler/pkg/config.gitVersion={{.Version}}-{{.ShortCommit}}-{{.Timestamp}}
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
