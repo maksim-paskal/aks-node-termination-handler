@@ -42,7 +42,7 @@ jobs:
         id: version
         run: |
           VERSION=$(git describe --always --dirty --exclude 'helm-chart-*')
-          TAG_PATTERN="^[0-9]+[.][0-9]+[0-9]+$"
+          TAG_PATTERN="^v[0-9]+[.][0-9]+[.][0-9]+$"
           if [[ "$VERSION" =~ $TAG_PATTERN ]]; then
             IS_TAG="true"
           else
