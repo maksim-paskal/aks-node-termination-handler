@@ -157,7 +157,8 @@ jobs:
     needs: build
     if: ${{ needs.build.outputs.IS_TAG == 'true' }}
     steps:
-      - run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $GITHUB_ENV
+      - run: '"IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $env:GITHUB_ENV'
+        shell: pwsh
       - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           registry: ${{ env.REGISTRY }}
