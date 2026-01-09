@@ -1,13 +1,34 @@
-image: paskalmaksim/aks-node-termination-handler:latest@sha256:718405dbbd0a943c2aac0feedf3dafd04b2833a92cb1e37fbb929b2ef45a15d0
-imagePullPolicy: Always
-imagePullSecrets: []
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the chart
+fullnameOverride: ""
+
+image:
+  # -- Image registry
+  registry: ghcr.io
+  # -- Image repository
+  repository: vince-riv/aks-node-termination-handler
+  # -- Image tag (defaults to appVersion if not set)
+  tag: ""
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Image pull secrets
+  pullSecrets: []
 
 args: []
 env: []
 
 priorityClassName: ""
-annotations: {}
-labels: {}
+
+# -- Labels to add to all deployed resources
+commonLabels: {}
+# -- Annotations to add to all deployed resources
+commonAnnotations: {}
+
+# -- Labels to add to the pods
+podLabels: {}
+# -- Annotations to add to the pods
+podAnnotations: {}
 
 configMap:
   create: true
