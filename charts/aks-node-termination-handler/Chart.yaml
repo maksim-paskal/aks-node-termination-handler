@@ -2,8 +2,8 @@
 apiVersion: v2
 icon: https://helm.sh/img/helm.svg
 name: aks-node-termination-handler
-version: 1.2.0
-appVersion: "2.0.0"
+version: 1.3.0
+appVersion: "2.1.0"
 description: Gracefully handle Azure Virtual Machines shutdown within Kubernetes
 maintainers:
   - name: maksim-paskal  # Maksim Paskal

@@ -37,6 +37,7 @@ rules:
     verbs:
       - list
       - get
+      - delete
   - apiGroups:
       - ""
     resources:
