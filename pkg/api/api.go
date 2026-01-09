@@ -91,6 +91,7 @@ func DrainNode(ctx context.Context, nodeName string, eventType string, eventID s
 		ErrOut:              logger,
 		DeleteEmptyDirData:  true,
 		Timeout:             config.Get().NodeGracePeriod(),
+		DisableEviction:     *config.Get().DisableEviction,
 	}
 
 	if *config.Get().DryRun {

@@ -81,6 +81,7 @@ type Type struct {
 	DrainOnFreezeEvent     *bool
 	ResourceName           *string
 	ExitAfterNodeDrain     *bool
+	DisableEviction        *bool
 }
 
 var config = Type{
@@ -115,6 +116,7 @@ var config = Type{
 	ResourceName:           flag.String("resource.name", "", "Azure resource name to drain"),
 	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),
 	DryRun:                 flag.Bool("dryRun", defaultDryRun, "if true, nodes will not be tainted, cordoned, or drained"),
+	DisableEviction:        flag.Bool("disableEviction", false, "if true, force drain to use delete, even if eviction is supported. This will bypass checking PodDisruptionBudgets"),
 }
 
 func (t *Type) GracePeriod() time.Duration {
