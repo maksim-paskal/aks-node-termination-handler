@@ -29,3 +29,28 @@ func SleepWithContext(ctx context.Context, d time.Duration) {
 		return
 	}
 }
+
+const minGracePeriodSeconds = 1
+
+// CalculatePodGracePeriod returns the pod grace period in seconds.
+// If dynamicGracePeriod is false, returns staticGracePeriodSeconds.
+// If dynamicGracePeriod is true, calculates based on notBeforeTime minus buffer.
+// Returns minGracePeriodSeconds (1) if notBeforeTime is zero or calculated value is <= 0.
+func CalculatePodGracePeriod(dynamicGracePeriod bool, staticGracePeriodSeconds int, notBeforeTime time.Time, buffer time.Duration) int {
+	if !dynamicGracePeriod {
+		return staticGracePeriodSeconds
+	}
+
+	if notBeforeTime.IsZero() {
+		return minGracePeriodSeconds
+	}
+
+	gracePeriod := time.Until(notBeforeTime) - buffer
+	gracePeriodSeconds := int(gracePeriod.Seconds())
+
+	if gracePeriodSeconds < minGracePeriodSeconds {
+		return minGracePeriodSeconds
+	}
+
+	return gracePeriodSeconds
+}

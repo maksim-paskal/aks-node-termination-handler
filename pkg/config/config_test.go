@@ -24,7 +24,8 @@ import (
 
 //nolint:paralleltest
 func TestConfigDefaults(t *testing.T) {
-	if err := config.Load(); err != nil {
+	err := config.Load()
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -147,6 +148,7 @@ func TestConfig(t *testing.T) {
 				TelegramChatID: &testCases[i].telegramID,
 			}
 			config.Set(newConfig)
+
 			err := config.Check()
 
 			if testCases[i].err {

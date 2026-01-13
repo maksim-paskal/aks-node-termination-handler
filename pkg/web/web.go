@@ -50,7 +50,8 @@ func Start(ctx context.Context) {
 		_ = server.Shutdown(shutdownCtx) //nolint:contextcheck
 	}()
 
-	if err := server.ListenAndServe(); err != nil && ctx.Err() == nil {
+	err := server.ListenAndServe()
+	if err != nil && ctx.Err() == nil {
 		log.WithError(err).Fatal()
 	}
 }
@@ -74,7 +75,8 @@ func GetHandler() *http.ServeMux {
 
 func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 	// check alerts transports
-	if err := alert.Ping(); err != nil {
+	err := alert.Ping()
+	if err != nil {
 		log.WithError(err).Error("alerts transport is not working")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -93,7 +95,7 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerDrainNode(w http.ResponseWriter, r *http.Request) {
-	err := api.DrainNode(r.Context(), *config.Get().NodeName, "Preempt", "manual")
+	err := api.DrainNode(r.Context(), *config.Get().NodeName, "Preempt", "manual", *config.Get().PodGracePeriodSeconds)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

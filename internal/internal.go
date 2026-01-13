@@ -27,6 +27,7 @@ import (
 	"github.com/vince-riv/aks-node-termination-handler/pkg/metrics"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/template"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/web"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/webhook"
 )
@@ -86,7 +87,8 @@ func startReadingEvents(ctx context.Context) error {
 	eventReader.NodeName = *config.Get().NodeName
 	eventReader.BeforeReading = func(ctx context.Context) error {
 		// add event to node
-		if err := api.AddNodeEvent(ctx, "Info", "ReadEvents", config.EventMessageBeforeListen); err != nil {
+		err := api.AddNodeEvent(ctx, "Info", "ReadEvents", config.EventMessageBeforeListen)
+		if err != nil {
 			return errors.Wrap(err, "error in add node event")
 		}
 
@@ -95,7 +97,8 @@ func startReadingEvents(ctx context.Context) error {
 
 	eventReader.EventReceived = func(ctx context.Context, event types.ScheduledEventsEvent) (bool, error) {
 		// add event to node
-		if err := api.AddNodeEvent(ctx, "Warning", string(event.EventType), config.EventMessageReceived); err != nil {
+		err := api.AddNodeEvent(ctx, "Warning", string(event.EventType), config.EventMessageReceived)
+		if err != nil {
 			return false, errors.Wrap(err, "error in add node event")
 		}
 
@@ -108,13 +111,24 @@ func startReadingEvents(ctx context.Context) error {
 
 		// send event in separate goroutine
 		go func() {
-			if err := sendEvent(ctx, event); err != nil {
+			err := sendEvent(ctx, event)
+			if err != nil {
 				log.WithError(err).Error("error in sendEvent")
 			}
 		}()
 
 		// drain node
-		if err := api.DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId); err != nil {
+		notBeforeTime, _ := event.NotBeforeTime()
+
+		podGracePeriod := utils.CalculatePodGracePeriod(
+			*config.Get().DynamicGracePeriod,
+			*config.Get().PodGracePeriodSeconds,
+			notBeforeTime,
+			*config.Get().DynamicGracePeriodBuffer,
+		)
+
+		err = api.DrainNode(ctx, *config.Get().NodeName, string(event.EventType), event.EventId, podGracePeriod)
+		if err != nil {
 			return false, errors.Wrap(err, "error in DrainNode")
 		}
 
