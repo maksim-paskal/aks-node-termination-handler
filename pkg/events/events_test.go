@@ -1,5 +1,6 @@
 /*
-Copyright paskal.maksim@gmail.com
+Copyright paskal.maksim@gmail.com (Original Author 2021-2025)
+Copyright github@vince-riv.io (Modifications 2026-present)
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at

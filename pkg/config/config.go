@@ -82,6 +82,7 @@ type Type struct {
 	ResourceName           *string
 	ExitAfterNodeDrain     *bool
 	DisableEviction        *bool
+	NotBeforeThreshold     *time.Duration
 }
 
 var config = Type{
@@ -117,6 +118,7 @@ var config = Type{
 	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),
 	DryRun:                 flag.Bool("dryRun", defaultDryRun, "if true, nodes will not be tainted, cordoned, or drained"),
 	DisableEviction:        flag.Bool("disableEviction", false, "if true, force drain to use delete, even if eviction is supported. This will bypass checking PodDisruptionBudgets"),
+	NotBeforeThreshold:     flag.Duration("notBeforeThreshold", 0, "ignore events where NotBefore is further in the future than this threshold (0 to disable)"),
 }
 
 func (t *Type) GracePeriod() time.Duration {

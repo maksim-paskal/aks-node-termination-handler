@@ -15,6 +15,7 @@ package types
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -48,6 +49,21 @@ type ScheduledEventsEvent struct {
 	Description       string                   `description:"Description of this event."`
 	EventSource       string                   `description:"Initiator of the event."`
 	DurationInSeconds int                      `description:"The expected duration of the interruption caused by the event."`
+}
+
+// NotBeforeTime parses the NotBefore field and returns it as time.Time.
+// Returns zero time if NotBefore is empty (event has already started).
+func (e *ScheduledEventsEvent) NotBeforeTime() (time.Time, error) {
+	if e.NotBefore == "" {
+		return time.Time{}, nil
+	}
+
+	t, err := time.Parse(time.RFC1123, e.NotBefore)
+	if err != nil {
+		return time.Time{}, errors.Wrap(err, "failed to parse NotBefore time")
+	}
+
+	return t, nil
 }
 
 var (

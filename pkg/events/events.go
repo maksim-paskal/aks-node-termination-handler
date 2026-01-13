@@ -1,5 +1,6 @@
 /*
-Copyright paskal.maksim@gmail.com
+Copyright paskal.maksim@gmail.com (Original Author 2021-2025)
+Copyright github@vince-riv.io (Modifications 2026-present)
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -22,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/cache"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/metrics"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
@@ -158,6 +160,14 @@ func (r *Reader) ReadEndpoint(ctx context.Context) (bool, error) {
 					continue
 				}
 
+				// check if NotBefore is too far in the future
+				skip, err := r.shouldSkipNotBefore(event)
+				if err != nil {
+					log.WithError(err).Warn("failed to parse NotBefore, processing event anyway")
+				} else if skip {
+					continue
+				}
+
 				// add to cache, ignore similar events for 10 minutes
 				cache.Add(event.EventId, eventCacheTTL)
 
@@ -184,4 +194,33 @@ func (r *Reader) String() string {
 	b, _ := json.Marshal(r) //nolint:errchkjson
 
 	return string(b)
+}
+
+// shouldSkipNotBefore checks if the event's NotBefore time is too far in the future.
+// Returns true if the event should be skipped (NotBefore exceeds threshold).
+func (r *Reader) shouldSkipNotBefore(event types.ScheduledEventsEvent) (bool, error) {
+	threshold := *config.Get().NotBeforeThreshold
+	if threshold <= 0 {
+		return false, nil
+	}
+
+	notBeforeTime, err := event.NotBeforeTime()
+	if err != nil {
+		return false, errors.Wrap(err, "error parsing NotBefore time")
+	}
+
+	// empty NotBefore means event has already started
+	if notBeforeTime.IsZero() {
+		return false, nil
+	}
+
+	timeUntilEvent := time.Until(notBeforeTime)
+	if timeUntilEvent > threshold {
+		log.Debugf("Event %s NotBefore (%s) is %s in the future, exceeds threshold %s, skipping",
+			event.EventId, event.NotBefore, timeUntilEvent.Round(time.Second), threshold)
+
+		return true, nil
+	}
+
+	return false, nil
 }
