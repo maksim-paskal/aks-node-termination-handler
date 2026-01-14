@@ -18,6 +18,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -37,6 +38,11 @@ const (
 	defaultWebHookTimeout           = 30 * time.Second
 	defaultDryRun                   = false
 	defaultDynamicGracePeriodBuffer = 15 * time.Second
+
+	// EnvDeploymentTestMode is an environment variable that enables deployment test mode.
+	// When set to "true", the application skips IMDS checks and runs in an idle loop,
+	// allowing helm chart testing in environments without Azure IMDS.
+	EnvDeploymentTestMode = "ANTH_DEPLOYMENT_TEST"
 )
 
 const (
@@ -205,4 +211,9 @@ var gitVersion = "dev"
 
 func GetVersion() string {
 	return gitVersion
+}
+
+// IsDeploymentTestMode returns true if the ANTH_DEPLOYMENT_TEST environment variable is set to "true".
+func IsDeploymentTestMode() bool {
+	return strings.ToLower(os.Getenv(EnvDeploymentTestMode)) == "true"
 }

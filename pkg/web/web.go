@@ -75,6 +75,13 @@ func GetHandler() *http.ServeMux {
 }
 
 func handlerHealthz(w http.ResponseWriter, r *http.Request) {
+	// In deployment test mode, skip all checks since services are not initialized
+	if config.IsDeploymentTestMode() {
+		_, _ = w.Write([]byte("LIVE"))
+
+		return
+	}
+
 	// check alerts transports
 	err := alert.Ping()
 	if err != nil {

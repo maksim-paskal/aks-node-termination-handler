@@ -83,6 +83,18 @@ func Run(ctx context.Context) error {
 
 	log.Debugf("using config: %s", config.Get().String())
 
+	// In deployment test mode, start only the web server and sleep until interrupted.
+	// This allows helm chart testing in environments without Azure IMDS.
+	if config.IsDeploymentTestMode() {
+		log.Warn("Deployment test mode enabled - running in idle mode")
+
+		go web.Start(ctx)
+
+		<-ctx.Done()
+
+		return nil
+	}
+
 	retryClient := retryablehttp.NewClient()
 	retryClient.HTTPClient.Transport = metrics.NewInstrumenter("webhook").
 		WithProxy(*config.Get().WebhookProxy).

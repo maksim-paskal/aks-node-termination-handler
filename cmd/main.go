@@ -85,13 +85,16 @@ func main() {
 		os.Exit(1)
 	}()
 
-	if !*config.Get().SkipIMDSCheck {
+	switch {
+	case config.IsDeploymentTestMode():
+		log.Warn("Skipping instance metadata service check (deployment test mode)")
+	case *config.Get().SkipIMDSCheck:
+		log.Info("Skipping instance metadata service check (skipIMDSCheck=true)")
+	default:
 		err = internal.WaitForIMDS(ctx)
 		if err != nil {
 			log.WithError(err).Fatal()
 		}
-	} else {
-		log.Info("Skipping instance metadata service check (skipIMDSCheck=true)")
 	}
 
 	err = internal.Run(ctx)
