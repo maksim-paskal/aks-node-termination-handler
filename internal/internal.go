@@ -14,6 +14,7 @@ package internal
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
@@ -31,6 +32,43 @@ import (
 	"github.com/vince-riv/aks-node-termination-handler/pkg/web"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/webhook"
 )
+
+const (
+	imdsWaitTimeout   = 5 * time.Minute
+	imdsRetryInterval = 5 * time.Second
+)
+
+// WaitForIMDS waits for the instance metadata service to become available.
+// Azure documentation indicates IMDS may not be available for up to 2 minutes after VM start.
+// This function will retry for up to 5 minutes before returning an error.
+func WaitForIMDS(ctx context.Context) error {
+	log.Info("Waiting for instance metadata service to become available...")
+
+	ctx, cancel := context.WithTimeout(ctx, imdsWaitTimeout)
+	defer cancel()
+
+	for {
+		err := events.Ping(ctx)
+		if err == nil {
+			log.Info("Instance metadata service is available")
+
+			return nil
+		}
+
+		log.WithError(err).Debug("Instance metadata service not yet available, retrying...")
+
+		select {
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return errors.New("timed out waiting for instance metadata service")
+			}
+
+			return errors.Wrap(ctx.Err(), "interrupted while waiting for instance metadata service")
+		case <-time.After(imdsRetryInterval):
+			// continue retry loop
+		}
+	}
+}
 
 func Run(ctx context.Context) error {
 	err := config.Load()

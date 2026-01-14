@@ -85,7 +85,13 @@ func main() {
 		os.Exit(1)
 	}()
 
-	if err := internal.Run(ctx); err != nil {
+	err = internal.WaitForIMDS(ctx)
+	if err != nil {
+		log.WithError(err).Fatal()
+	}
+
+	err = internal.Run(ctx)
+	if err != nil {
 		log.WithError(err).Fatal()
 	}
 
