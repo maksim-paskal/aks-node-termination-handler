@@ -22,6 +22,7 @@ import (
 	"github.com/vince-riv/aks-node-termination-handler/pkg/alert"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/api"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/events"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/metrics"
 )
 
@@ -78,6 +79,15 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 	err := alert.Ping()
 	if err != nil {
 		log.WithError(err).Error("alerts transport is not working")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	// check instance metadata API
+	err = events.Ping(r.Context())
+	if err != nil {
+		log.WithError(err).Error("instance metadata API is not available")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return

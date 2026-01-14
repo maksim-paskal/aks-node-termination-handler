@@ -110,7 +110,7 @@ func (r *Reader) getScheduledEvents(ctx context.Context) (*types.ScheduledEvents
 		"method":  req.Method,
 		"url":     req.URL,
 		"headers": req.Header,
-	}).Debug("Doing request")
+	}).Debug("Doing request for getScheduledEvents()")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -194,6 +194,38 @@ func (r *Reader) String() string {
 	b, _ := json.Marshal(r) //nolint:errchkjson
 
 	return string(b)
+}
+
+// Ping checks connectivity to the instance metadata API endpoint.
+func Ping(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)
+	if err != nil {
+		return errors.Wrap(err, "error creating request")
+	}
+
+	req.Header.Add("Metadata", "true")
+
+	log.WithFields(log.Fields{
+		"method":  req.Method,
+		"url":     req.URL,
+		"headers": req.Header,
+	}).Debug("Doing request for Ping()")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "error connecting to instance metadata API")
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return errors.Errorf("instance metadata API returned status %d", resp.StatusCode)
+	}
+
+	return nil
 }
 
 // shouldSkipNotBefore checks if the event's NotBefore time is too far in the future.
