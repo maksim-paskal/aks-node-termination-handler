@@ -85,12 +85,14 @@ func handlerHealthz(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check instance metadata API
-	err = events.Ping(r.Context())
-	if err != nil {
-		log.WithError(err).Error("instance metadata API is not available")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !*config.Get().SkipIMDSCheck {
+		err = events.Ping(r.Context())
+		if err != nil {
+			log.WithError(err).Error("instance metadata API is not available")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 
-		return
+			return
+		}
 	}
 
 	// check kubernetes API

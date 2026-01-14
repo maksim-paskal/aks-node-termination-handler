@@ -85,9 +85,13 @@ func main() {
 		os.Exit(1)
 	}()
 
-	err = internal.WaitForIMDS(ctx)
-	if err != nil {
-		log.WithError(err).Fatal()
+	if !*config.Get().SkipIMDSCheck {
+		err = internal.WaitForIMDS(ctx)
+		if err != nil {
+			log.WithError(err).Fatal()
+		}
+	} else {
+		log.Info("Skipping instance metadata service check (skipIMDSCheck=true)")
 	}
 
 	err = internal.Run(ctx)

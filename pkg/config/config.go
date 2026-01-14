@@ -86,6 +86,7 @@ type Type struct {
 	NotBeforeThreshold       *time.Duration
 	DynamicGracePeriod       *bool
 	DynamicGracePeriodBuffer *time.Duration
+	SkipIMDSCheck            *bool
 }
 
 var config = Type{
@@ -124,6 +125,7 @@ var config = Type{
 	NotBeforeThreshold:       flag.Duration("notBeforeThreshold", 0, "ignore events where NotBefore is further in the future than this threshold (0 to disable)"),
 	DynamicGracePeriod:       flag.Bool("dynamicGracePeriod", false, "calculate pod grace period dynamically based on NotBefore timestamp"),
 	DynamicGracePeriodBuffer: flag.Duration("dynamicGracePeriodBuffer", defaultDynamicGracePeriodBuffer, "buffer time to subtract when calculating dynamic grace period"),
+	SkipIMDSCheck:            flag.Bool("skipIMDSCheck", false, "skip instance metadata service availability check at startup and in health endpoint"),
 }
 
 func (t *Type) GracePeriod() time.Duration {
