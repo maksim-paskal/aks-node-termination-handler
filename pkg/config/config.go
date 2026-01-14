@@ -29,11 +29,11 @@ import (
 const (
 	azureEndpoint                   = "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01"
 	defaultAlertMessage             = "Draining node={{ .NodeName }}, type={{ .Event.EventType }}"
-	defaultPeriod                   = 5 * time.Second
+	defaultPeriod                   = 1 * time.Second
 	defaultPodGracePeriodSeconds    = -1
 	defaultNodeGracePeriodSeconds   = 120
 	defaultGracePeriodSecond        = 10
-	defaultRequestTimeout           = 5 * time.Second
+	defaultRequestTimeout           = 1 * time.Second
 	defaultWebHookTimeout           = 30 * time.Second
 	defaultDryRun                   = false
 	defaultDynamicGracePeriodBuffer = 15 * time.Second

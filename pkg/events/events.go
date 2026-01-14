@@ -29,11 +29,7 @@ import (
 	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
 )
 
-const (
-	requestTimeout = 10 * time.Second
-	readInterval   = 5 * time.Second
-	eventCacheTTL  = 10 * time.Minute
-)
+const eventCacheTTL = 10 * time.Minute
 
 var httpClient = &http.Client{
 	Transport: metrics.NewInstrumenter("events").InstrumentedRoundTripper(),
@@ -62,9 +58,9 @@ type Reader struct {
 func NewReader() *Reader {
 	return &Reader{
 		Method:         http.MethodGet,
-		Endpoint:       "http://169.254.169.254/metadata/scheduledevents?api-version=2020-07-01",
-		RequestTimeout: requestTimeout,
-		Period:         readInterval,
+		Endpoint:       *config.Get().Endpoint,
+		RequestTimeout: *config.Get().RequestTimeout,
+		Period:         *config.Get().Period,
 	}
 }
 
@@ -198,7 +194,7 @@ func (r *Reader) String() string {
 
 // Ping checks connectivity to the instance metadata API endpoint.
 func Ping(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, *config.Get().RequestTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, *config.Get().Endpoint, nil)

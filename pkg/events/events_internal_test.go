@@ -14,11 +14,15 @@ limitations under the License.
 package events
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/vince-riv/aks-node-termination-handler/pkg/config"
 	"github.com/vince-riv/aks-node-termination-handler/pkg/types"
+	"github.com/vince-riv/aks-node-termination-handler/pkg/utils"
 )
 
 //nolint:funlen,paralleltest // paralleltest disabled due to global config state
@@ -84,7 +88,13 @@ func TestShouldSkipNotBefore(t *testing.T) {
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
 			threshold := testCase.threshold
+			endpoint := "http://127.0.0.1/test"
+			requestTimeout := 1 * time.Second
+			period := 1 * time.Second
 			config.Set(config.Type{ //nolint:exhaustruct
+				Endpoint:           &endpoint,
+				RequestTimeout:     &requestTimeout,
+				Period:             &period,
 				NotBeforeThreshold: &threshold,
 			})
 
@@ -118,4 +128,76 @@ func TestShouldSkipNotBefore(t *testing.T) {
 			}
 		})
 	}
+}
+
+//nolint:funlen,paralleltest // paralleltest disabled due to global config state
+func TestPing(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/ok", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	handler.HandleFunc("/error", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+	handler.HandleFunc("/timeout", func(w http.ResponseWriter, r *http.Request) {
+		utils.SleepWithContext(r.Context(), 5*time.Second)
+		w.WriteHeader(http.StatusOK)
+	})
+
+	testServer := httptest.NewServer(handler)
+	defer testServer.Close()
+
+	t.Run("success - 200 response", func(t *testing.T) {
+		endpoint := testServer.URL + "/ok"
+		requestTimeout := 1 * time.Second
+		period := 1 * time.Second
+		notBeforeThreshold := time.Duration(0)
+		config.Set(config.Type{ //nolint:exhaustruct
+			Endpoint:           &endpoint,
+			RequestTimeout:     &requestTimeout,
+			Period:             &period,
+			NotBeforeThreshold: &notBeforeThreshold,
+		})
+
+		err := Ping(context.Background())
+		if err != nil {
+			t.Errorf("Ping() unexpected error: %v", err)
+		}
+	})
+
+	t.Run("failure - non-200 response", func(t *testing.T) {
+		endpoint := testServer.URL + "/error"
+		requestTimeout := 1 * time.Second
+		period := 1 * time.Second
+		notBeforeThreshold := time.Duration(0)
+		config.Set(config.Type{ //nolint:exhaustruct
+			Endpoint:           &endpoint,
+			RequestTimeout:     &requestTimeout,
+			Period:             &period,
+			NotBeforeThreshold: &notBeforeThreshold,
+		})
+
+		err := Ping(context.Background())
+		if err == nil {
+			t.Error("Ping() expected error for non-200 response")
+		}
+	})
+
+	t.Run("failure - request timeout", func(t *testing.T) {
+		endpoint := testServer.URL + "/timeout"
+		requestTimeout := 100 * time.Millisecond
+		period := 1 * time.Second
+		notBeforeThreshold := time.Duration(0)
+		config.Set(config.Type{ //nolint:exhaustruct
+			Endpoint:           &endpoint,
+			RequestTimeout:     &requestTimeout,
+			Period:             &period,
+			NotBeforeThreshold: &notBeforeThreshold,
+		})
+
+		err := Ping(context.Background())
+		if err == nil {
+			t.Error("Ping() expected error for timeout")
+		}
+	})
 }

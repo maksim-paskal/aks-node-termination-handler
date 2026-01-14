@@ -81,9 +81,6 @@ func startReadingEvents(ctx context.Context) error {
 
 	eventReader := events.NewReader()
 	eventReader.AzureResource = azureResource
-	eventReader.Period = *config.Get().Period
-	eventReader.Endpoint = *config.Get().Endpoint
-	eventReader.RequestTimeout = *config.Get().RequestTimeout
 	eventReader.NodeName = *config.Get().NodeName
 	eventReader.BeforeReading = func(ctx context.Context) error {
 		// add event to node
