@@ -1,0 +1,6 @@
+---
+# Test values for chart-testing (ct install)
+
+env:
+  - name: ANTH_DEPLOYMENT_TEST
+    value: "true"

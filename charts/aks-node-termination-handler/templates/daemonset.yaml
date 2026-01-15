@@ -83,14 +83,14 @@ spec:
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- with .Values.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: http
-              scheme: HTTP
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 17923

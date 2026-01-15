@@ -96,3 +96,23 @@ resources:
   requests:
     cpu: 20m
     memory: 100Mi
+
+# -- Startup probe configuration
+# Allows 5 minutes for instance metadata service to become available
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+    scheme: HTTP
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+    scheme: HTTP
+  periodSeconds: 30
+  timeoutSeconds: 5
