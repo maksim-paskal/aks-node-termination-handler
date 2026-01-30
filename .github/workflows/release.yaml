@@ -99,7 +99,7 @@ jobs:
     if: ${{ needs.build.outputs.IS_TAG != 'true' }}
     steps:
       - run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $GITHUB_ENV
-      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -117,7 +117,7 @@ jobs:
     if: ${{ needs.build.outputs.IS_TAG == 'true' }}
     steps:
       - run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $GITHUB_ENV
-      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -135,7 +135,7 @@ jobs:
     if: ${{ needs.build.outputs.IS_TAG == 'true' }}
     steps:
       - run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $GITHUB_ENV
-      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -159,7 +159,7 @@ jobs:
     steps:
       - run: '"IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $env:GITHUB_ENV'
         shell: pwsh
-      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -179,7 +179,7 @@ jobs:
     steps:
       - run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.VERSION }}" >> $GITHUB_ENV
       - run: echo "IMAGE_LATEST=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
-      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
