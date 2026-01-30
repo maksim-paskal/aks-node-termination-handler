@@ -68,6 +68,7 @@ type Type struct {
 	RequestTimeout           *time.Duration
 	TelegramToken            *string
 	TelegramChatID           *string
+	SlackChannel             *string
 	AlertMessage             *string
 	WebHookContentType       *string
 	WebHookURL               *string
@@ -106,6 +107,7 @@ var config = Type{
 	RequestTimeout:           flag.Duration("request.timeout", defaultRequestTimeout, "request timeout"),
 	TelegramToken:            flag.String("telegram.token", os.Getenv("TELEGRAM_TOKEN"), "telegram token"),
 	TelegramChatID:           flag.String("telegram.chatID", os.Getenv("TELEGRAM_CHATID"), "telegram chatID"),
+	SlackChannel:             flag.String("slack.channel", os.Getenv("SLACK_CHANNEL"), "slack channel ID"),
 	AlertMessage:             flag.String("alert.message", defaultAlertMessage, "default message"),
 	WebHookMethod:            flag.String("webhook.method", "POST", "request method"),
 	WebHookContentType:       flag.String("webhook.contentType", "application/json", "request content-type header"),
@@ -216,4 +218,10 @@ func GetVersion() string {
 // IsDeploymentTestMode returns true if the ANTH_DEPLOYMENT_TEST environment variable is set to "true".
 func IsDeploymentTestMode() bool {
 	return strings.ToLower(os.Getenv(EnvDeploymentTestMode)) == "true"
+}
+
+// GetSlackToken returns the Slack bot token from the SLACK_TOKEN environment variable.
+// The token is not exposed as a command-line flag for security reasons.
+func GetSlackToken() string {
+	return os.Getenv("SLACK_TOKEN")
 }

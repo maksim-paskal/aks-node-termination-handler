@@ -15,11 +15,17 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
+      - name: Set head commit SHA as a custom environment variable
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "GITHUB_PR_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
         with:
           go-version-file: 'go.mod'
       - run: make test
+        env:
+          SLACK_TOKEN: ${{ secrets.SLACK_INTEGRATION_BOT_USER_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_INTEGRATION_CHANNEL_ID }}
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:

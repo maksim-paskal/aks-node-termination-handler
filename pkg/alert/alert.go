@@ -1,5 +1,6 @@
 /*
-Copyright paskal.maksim@gmail.com
+Copyright paskal.maksim@gmail.com (Original Author 2021-2025)
+Copyright github@vince-riv.io (Modifications 2026-present)
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -10,6 +11,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package alert
 
 import (
@@ -25,6 +27,20 @@ import (
 var bot *tgbotapi.BotAPI
 
 func Init() error {
+	err := initTelegram()
+	if err != nil {
+		return err
+	}
+
+	err = initSlack()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func initTelegram() error {
 	if len(*config.Get().TelegramToken) == 0 {
 		log.Warning("not sending Telegram message, no token")
 
@@ -49,6 +65,11 @@ func Ping() error {
 		if _, err := bot.GetMe(); err != nil {
 			return errors.Wrap(err, "error in bot.GetMe")
 		}
+	}
+
+	err := pingSlack()
+	if err != nil {
+		return err
 	}
 
 	return nil
