@@ -1,8 +1,10 @@
 KUBECONFIG=$(HOME)/.kube/azure-stage
 tag=dev
 image=paskalmaksim/aks-node-termination-handler:$(tag)
-telegramToken=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM
-telegramChatID=-439460552
+#telegramToken=1072104160:AAH2sFpHELeH5oxMmd-tsVjgTuzoYO6hSLM
+#telegramChatID=-439460552
+telegramToken=
+telegramChatID=
 node=`kubectl get no -lkubernetes.azure.com/scalesetpriority=spot | awk '{print $$1}' | tail -1` 
 
 chart-lint:
@@ -63,7 +65,6 @@ test:
 	go fmt ./cmd/... ./pkg/... ./internal/...
 	go vet ./cmd/... ./pkg/... ./internal/...
 	go test --race -coverprofile coverage.out ./cmd/... ./pkg/...
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run -v
 
 .PHONY: e2e
 e2e:

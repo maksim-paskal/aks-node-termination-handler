@@ -1,4 +1,4 @@
-ARG WINDOWS_VERSION=ltsc2022
+ARG WINDOWS_VERSION=ltsc2025
 
 FROM mcr.microsoft.com/windows/nanoserver:$WINDOWS_VERSION
 
