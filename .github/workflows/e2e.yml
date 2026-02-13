@@ -5,15 +5,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        k3s_version: ["v1.26.11+k3s2","v1.27.8+k3s2","v1.28.4+k3s2","v1.29.2+k3s1"]
+        k3s_version:
+          - v1.35.0+k3s1
+          - v1.34.3+k3s1
+          - v1.33.7+k3s1
+          - v1.32.11+k3s1
+          - v1.31.14+k3s1
     steps:
-    - name: Setup Kubernetes
-      run: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${{ matrix.k3s_version }}" K3S_KUBECONFIG_MODE=777 sh -
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.23'
-    - name: Run tests
-      run: make e2e KUBECONFIG=/etc/rancher/k3s/k3s.yaml node=$(kubectl --kubeconfig=/etc/rancher/k3s/k3s.yaml get no --no-headers | awk '{print $1}' | tail -1)
+      - name: Setup Kubernetes
+        run: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${{ matrix.k3s_version }}" K3S_KUBECONFIG_MODE=777 sh -
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - name: Setup Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
+        with:
+          go-version: '1.23'
+      - name: Run tests
+        run: make e2e KUBECONFIG=/etc/rancher/k3s/k3s.yaml node=$(kubectl --kubeconfig=/etc/rancher/k3s/k3s.yaml get no --no-headers | awk '{print $1}' | tail -1)
