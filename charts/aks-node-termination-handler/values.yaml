@@ -3,7 +3,9 @@ nameOverride: ""
 # -- Override the full name of the chart
 fullnameOverride: ""
 
-image: paskalmaksim/aks-node-termination-handler:latest
+image: paskalmaksim/aks-node-termination-handler
+# -- Image tag. Defaults to "v{Chart.appVersion}" if not set and image does not contain a tag.
+imageTag: ""
 imagePullPolicy: Always
 imagePullSecrets: []
 

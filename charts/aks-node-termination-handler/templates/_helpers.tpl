@@ -54,6 +54,22 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Create the image reference.
+If imageTag is set, use image:imageTag.
+If image already contains a tag (":"), use it as-is (backward compat).
+Otherwise append ":v{Chart.AppVersion}".
+*/}}
+{{- define "aks-node-termination-handler.image" -}}
+{{- if .Values.imageTag -}}
+{{- printf "%s:%s" .Values.image .Values.imageTag -}}
+{{- else if contains ":" .Values.image -}}
+{{- .Values.image -}}
+{{- else -}}
+{{- printf "%s:v%s" .Values.image .Chart.AppVersion -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Common annotations
 */}}
 {{- define "aks-node-termination-handler.annotations" -}}

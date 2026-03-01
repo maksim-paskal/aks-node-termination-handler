@@ -69,7 +69,7 @@ spec:
       {{- end }}
       containers:
         - name: aks-node-termination-handler
-          image: {{ .Values.image }}
+          image: {{ include "aks-node-termination-handler.image" . }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           {{- with .Values.resources }}
           resources:
