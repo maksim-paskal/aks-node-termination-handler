@@ -34,6 +34,7 @@ const (
 	defaultGracePeriodSecond      = 10
 	defaultRequestTimeout         = 5 * time.Second
 	defaultWebHookTimeout         = 30 * time.Second
+	defaultDryRun                 = false
 )
 
 const (
@@ -51,7 +52,7 @@ type Type struct {
 	ConfigFile             *string
 	LogPretty              *bool
 	LogLevel               *string
-	DevelopmentMode        *bool
+	DryRun                 *bool
 	KubeConfigFile         *string
 	Endpoint               *string
 	NodeName               *string
@@ -114,6 +115,7 @@ var config = Type{
 	ResourceName:           flag.String("resource.name", "", "Azure resource name to drain"),
 	ExitAfterNodeDrain:     flag.Bool("exitAfterNodeDrain", false, "process will exit after node drain"),
 	DisableEviction:        flag.Bool("disableEviction", false, "if true, force drain to use delete, even if eviction is supported. This will bypass checking PodDisruptionBudgets"),
+	DryRun:                 flag.Bool("dryRun", defaultDryRun, "if true, nodes will not be tainted, cordoned, or drained"),
 }
 
 func (t *Type) GracePeriod() time.Duration {
