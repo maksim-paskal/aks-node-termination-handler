@@ -36,7 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: cp Dockerfile ./dist/aks-node-termination-handler_linux_amd64_v1/Dockerfile
-      - run: cp Dockerfile ./dist/aks-node-termination-handler_linux_arm64/Dockerfile
+      - run: cp Dockerfile ./dist/aks-node-termination-handler_linux_arm64_v8.0/Dockerfile
       - run: cp Dockerfile.windows ./dist/aks-node-termination-handler_windows_amd64_v1/Dockerfile
       - run: tar -cvf release.tar ./dist
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
       - run: tar xvf ./release/release.tar
       - run: "docker build --pull --push --platform linux/arm64 -t ${{ env.IMAGE }}-linux-arm64 ."
-        working-directory: ./dist/aks-node-termination-handler_linux_arm64
+        working-directory: ./dist/aks-node-termination-handler_linux_arm64_v8.0
 
   publish-windows-amd64:
     runs-on: windows-latest
