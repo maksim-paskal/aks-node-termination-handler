@@ -1,3 +1,8 @@
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the chart
+fullnameOverride: ""
+
 image: paskalmaksim/aks-node-termination-handler:latest
 imagePullPolicy: Always
 imagePullSecrets: []
@@ -6,7 +11,20 @@ args: []
 env: []
 
 priorityClassName: ""
+
+# -- Labels to add to all deployed resources
+commonLabels: {}
+# -- Annotations to add to all deployed resources
+commonAnnotations: {}
+
+# -- Labels to add to the pods (in addition to standard labels)
+podLabels: {}
+# -- Annotations to add to the pods
+podAnnotations: {}
+
+# -- Annotations added to pods. Deprecated: use podAnnotations instead
 annotations: {}
+# -- Labels added to pods. Deprecated: use podLabels instead
 labels: {}
 
 configMap:
