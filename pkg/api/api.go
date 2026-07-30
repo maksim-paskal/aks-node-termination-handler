@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/maksim-paskal/aks-node-termination-handler/pkg/client"
@@ -32,7 +33,14 @@ import (
 	"k8s.io/kubectl/pkg/drain"
 )
 
-const taintKeyPrefix = "aks-node-termination-handler"
+const (
+	taintKeyPrefix = "aks-node-termination-handler"
+
+	providerIDBackoffSteps    = 20
+	providerIDBackoffDuration = 3 * time.Second
+	providerIDBackoffFactor   = 1.5
+	providerIDBackoffJitter   = 0.1
+)
 
 func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) {
 	// return user defined resource name
@@ -40,17 +48,43 @@ func GetAzureResourceName(ctx context.Context, nodeName string) (string, error) 
 		return *config.Get().ResourceName, nil
 	}
 
-	node, err := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
-	if err != nil {
-		return "", errors.Wrap(err, "error in Clientset.CoreV1().Nodes().Get")
+	// retries for ~3 minutes to handle fresh nodes where spec.providerID is
+	// briefly empty before the cloud controller manager populates it.
+	backoff := wait.Backoff{ //nolint:exhaustruct
+		Steps:    providerIDBackoffSteps,
+		Duration: providerIDBackoffDuration,
+		Factor:   providerIDBackoffFactor,
+		Jitter:   providerIDBackoffJitter,
 	}
 
-	azureResourceName, err := types.NewAzureResource(node.Spec.ProviderID)
+	var result string
+
+	err := wait.ExponentialBackoff(backoff, func() (bool, error) {
+		getOptions := metav1.GetOptions{} //nolint:exhaustruct
+
+		node, getErr := client.GetKubernetesClient().CoreV1().Nodes().Get(ctx, nodeName, getOptions)
+		if getErr != nil {
+			log.WithError(getErr).Warn("retrying: failed to get node")
+
+			return false, nil
+		}
+
+		resource, parseErr := types.NewAzureResource(node.Spec.ProviderID)
+		if parseErr != nil {
+			log.WithField("providerID", node.Spec.ProviderID).Warn("retrying: providerID not ready")
+
+			return false, nil //nolint:nilerr
+		}
+
+		result = resource.EventResourceName
+
+		return true, nil
+	})
 	if err != nil {
-		return "", errors.Wrap(err, "error in types.NewAzureResource")
+		return "", errors.Wrap(err, "error getting azure resource name")
 	}
 
-	return azureResourceName.EventResourceName, nil
+	return result, nil
 }
 
 func DrainNode(ctx context.Context, nodeName string, eventType string, eventID string) error { //nolint:cyclop
