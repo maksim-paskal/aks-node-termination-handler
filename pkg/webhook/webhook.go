@@ -85,7 +85,7 @@ func SendWebHook(ctx context.Context, obj *template.MessageType) error {
 	if err != nil {
 		return errors.Wrap(err, "error in client.Do")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	log.Infof("response status: %s", resp.Status)
 

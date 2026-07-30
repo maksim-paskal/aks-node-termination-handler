@@ -125,13 +125,11 @@ func printType(prefix string, message interface{}) {
 				}
 			}
 
-			buf.WriteString(fmt.Sprintf(
-				"| `{{ .%s%s }}` | %v | %v |\n",
+			fmt.Fprintf(&buf, "| `{{ .%s%s }}` | %v | %v |\n",
 				prefix,
 				typeOfS.Field(i).Name,
 				typeOfS.Field(i).Tag.Get("description"),
-				value,
-			))
+				value)
 		}
 	}
 }
