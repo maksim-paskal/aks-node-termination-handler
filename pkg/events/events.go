@@ -115,7 +115,7 @@ func (r *Reader) getScheduledEvents(ctx context.Context) (*types.ScheduledEvents
 		return nil, errors.Wrap(err, "error in client.Do(req)")
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	log.Debugf("response status: %s", resp.Status)
 

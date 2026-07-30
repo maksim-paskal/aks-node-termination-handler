@@ -5,7 +5,6 @@ run:
 issues:
   fix: true
 linters:
-  default: all
   settings:
     lll:
       line-length: 200

@@ -57,7 +57,7 @@ func TestMetricsHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if m := "aks_node_termination_handler_apiserver_request_duration"; !strings.Contains(string(body), m) {
 		t.Fatalf("no metric %s found", m)
@@ -83,7 +83,7 @@ func TestInstrumenter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 }
 
 func TestInstrumenterWithEmptyProxy(t *testing.T) {
@@ -95,7 +95,7 @@ func TestInstrumenterWithEmptyProxy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 }
 
 func TestInstrumenterProxy(t *testing.T) {
@@ -109,7 +109,7 @@ func TestInstrumenterProxy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 }
 
 func TestInstrumenterBabProxy(t *testing.T) {
@@ -123,5 +123,5 @@ func TestInstrumenterBabProxy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 }

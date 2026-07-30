@@ -143,7 +143,7 @@ func TestReadingEvents(t *testing.T) { //nolint:funlen
 		eventReader.Endpoint = testServer.URL + "/document"
 		eventReader.AzureResource = "resource1"
 		eventReader.BeforeReading = func(_ context.Context) error {
-			return errors.New("error in BeforeReading") //nolint:goerr113
+			return errors.New("error in BeforeReading") //nolint:err113
 		}
 		eventReader.EventReceived = func(_ context.Context, event types.ScheduledEventsEvent) (bool, error) {
 			receivedDocument = event

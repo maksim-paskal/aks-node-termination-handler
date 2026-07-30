@@ -48,7 +48,7 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Fatal()
 	}
 
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 
 	request = append(request, "--BODY--")
 	request = append(request, string(bodyBytes))
