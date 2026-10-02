@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrorrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/kubectl/pkg/drain"
@@ -306,7 +307,9 @@ func GetNodePods(ctx context.Context, nodeName string) ([]string, error) {
 		return []string{}, nil
 	}
 
-	pods, err := client.GetKubernetesClient().CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	pods, err := client.GetKubernetesClient().CoreV1().Pods("").List(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("spec.nodeName", nodeName).String(),
+	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error in pods.list")
 	}
@@ -319,9 +322,7 @@ func GetNodePods(ctx context.Context, nodeName string) ([]string, error) {
 			continue
 		}
 
-		if pod.Spec.NodeName == nodeName {
-			result = append(result, pod.Name)
-		}
+		result = append(result, pod.Name)
 	}
 
 	return result, nil
