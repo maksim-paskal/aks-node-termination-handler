@@ -2,7 +2,7 @@ module github.com/maksim-paskal/aks-node-termination-handler
 
 go 1.26.0
 
-toolchain go1.26.5
+toolchain go1.26.6
 
 require (
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
