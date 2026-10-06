@@ -76,10 +76,16 @@ jobs:
   publish-windows-amd64:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         windows-version: ['ltsc2019', 'ltsc2022', 'ltsc2025']
     needs: build
     steps:
+      # Docker service sometimes fails to fully initialize at runner boot, see
+      # https://github.com/actions/runner-images/issues/13729
+      - name: Restart Docker service
+        run: Restart-Service docker
+        shell: powershell
       - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
